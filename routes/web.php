@@ -40,6 +40,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::middleware('admin')->group(function () {
         Route::post('/zakazky/{order}/stav', [OrderAdminController::class, 'updateStatus'])->name('orders.status');
         Route::post('/zakazky/{order}/upozorneni', [OrderAdminController::class, 'updateNotify'])->name('orders.notify');
+        Route::post('/zakazky/{order}/platba', [OrderAdminController::class, 'updatePaid'])->name('orders.paid');
         Route::get('/zakazky/{order}/fotky.zip', [OrderAdminController::class, 'downloadZip'])->name('orders.zip');
 
         Route::get('/prehled', [ReportController::class, 'index'])->name('report.index');

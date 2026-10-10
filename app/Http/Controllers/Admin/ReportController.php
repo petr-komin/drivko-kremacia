@@ -50,7 +50,7 @@ class ReportController extends Controller
             $out = fopen('php://output', 'w');
             // BOM – Excel jinak otevře češtinu / slovenštinu rozsypanou
             fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, array_map(fn ($h) => __($h), ['Zakázka', 'Číslo případu', 'Název', 'Dřevo', 'Objem (ml)', 'Cena (€)', 'Vnitřní rozměry', 'Vnější rozměry', 'Tlapka', 'Text na urnu', 'Rozložení', 'Zadáno', 'Dokončeno', 'Předáno']), ';');
+            fputcsv($out, array_map(fn ($h) => __($h), ['Zakázka', 'Číslo případu', 'Název', 'Dřevo', 'Objem (ml)', 'Cena (€)', 'Vnitřní rozměry', 'Vnější rozměry', 'Tlapka', 'Text na urnu', 'Rozložení', 'Zadáno', 'Dokončeno', 'Předáno', 'Zaplaceno']), ';');
 
             foreach ($orders as $o) {
                 fputcsv($out, [
@@ -68,6 +68,7 @@ class ReportController extends Controller
                     $o->created_at->format('j. n. Y'),
                     $o->finished_at?->format('j. n. Y'),
                     $o->handed_over_at?->format('j. n. Y'),
+                    $o->paid_at?->format('j. n. Y H:i'),
                 ], ';');
             }
 

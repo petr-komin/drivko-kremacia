@@ -9,6 +9,7 @@ use App\Models\OrderPhoto;
 use App\Support\Notifier;
 use App\Support\Photos;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -82,6 +83,34 @@ class OrderAdminController extends Controller
         return back()->with('success', $order->notify
             ? __('E-maily k zakázce jsou zapnuté.')
             : __('E-maily k zakázce jsou vypnuté.'));
+    }
+
+    /**
+     * Zaplaceno – nezávisle na stavu výroby. Zaškrtnutí zapíše aktuální čas,
+     * datum jde pak opravit; odškrtnutí platbu smaže. Změna se zapíše do vlákna.
+     */
+    public function updatePaid(Request $request, Order $order)
+    {
+        $data = $request->validate([
+            'paid'    => 'boolean',
+            'paid_at' => 'nullable|date',
+        ]);
+
+        $order->paid_at = match (true) {
+            ! $request->boolean('paid')  => null,
+            ! empty($data['paid_at'])    => Carbon::parse($data['paid_at']),
+            default                      => $order->paid_at ?? now(),
+        };
+
+        if ($order->isDirty('paid_at')) {
+            $change = ['paid_at' => [$order->getOriginal('paid_at')?->toIso8601String(), $order->paid_at?->toIso8601String()]];
+            $order->save();
+            OrderMessage::system($order, 'edited', ['name' => $request->user()->name, 'changes' => $change]);
+        }
+
+        return back()->with('success', $order->isPaid()
+            ? __('Zakázka je zaplacená (:date).', ['date' => $order->paid_at->format('j. n. Y H:i')])
+            : __('Platba je zrušená.'));
     }
 
     /** Všechny fotky zakázky v jednom ZIPu – podklady i hotový kus. */

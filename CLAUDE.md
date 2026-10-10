@@ -41,6 +41,10 @@ Dřevo má dvě ceny v eurech (`price_small_eur` do 1500 ml včetně, `price_lar
 Cena se ukládá k zakázce (`orders.price_eur`) při zadání a přepočítá se jen při změně dřeva, objemu,
 tlapky nebo textu – pozdější změna ceníku staré zakázky nemění. Přehled ukazuje součet za měsíc, CSV sloupec Cena.
 
+## Zaplaceno
+`orders.paid_at` – samostatný údaj mimo stavy výroby. Dílna zaškrtne v detailu (zapíše teď), datum jde opravit;
+změna se zapíše do vlákna. Časové pásmo aplikace je Europe/Prague (`APP_TIMEZONE`).
+
 ## Jazyky (cs / sk)
 Dílna mluví česky, kremace slovensky – každý si jazyk přepne v profilu (menu se jménem vpravo nahoře), dílna ho může nastavit i v Uživatelích.
 - Texty v šablonách a kontrolerech přes `__('česká věta')` – čeština je klíč, překlad v `lang/sk.json`; popisky konstant

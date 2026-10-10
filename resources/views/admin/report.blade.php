@@ -57,7 +57,7 @@
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0 small">
                     <thead class="table-light">
-                        <tr><th>{{ __('Zakázka') }}</th><th>{{ __('Název') }}</th><th>{{ __('Případ') }}</th><th>{{ __('Dřevo') }} · {{ __('objem') }}</th><th class="text-end">{{ __('Cena') }}</th><th>{{ $bases[$basis] }}</th></tr>
+                        <tr><th>{{ __('Zakázka') }}</th><th>{{ __('Název') }}</th><th>{{ __('Případ') }}</th><th>{{ __('Dřevo') }} · {{ __('objem') }}</th><th class="text-end">{{ __('Cena') }}</th><th>{{ __('Zaplaceno') }}</th><th>{{ $bases[$basis] }}</th></tr>
                     </thead>
                     <tbody>
                         @forelse($orders as $order)
@@ -67,10 +67,11 @@
                                 <td>{{ $order->case_number }}</td>
                                 <td>{{ $order->woodType->label }} · {{ $order->volume_label }}</td>
                                 <td class="text-end text-nowrap">{{ \App\Models\Order::formatEur($order->price_eur) }}</td>
+                                <td class="text-nowrap">{{ $order->paid_at?->format('j. n. Y') ?? '–' }}</td>
                                 <td>{{ $order->{$basis}->format('j. n. Y') }}</td>
                             </tr>
                         @empty
-                            <tr><td colspan="6" class="text-center text-muted py-4">{{ __('V tomto měsíci nic.') }}</td></tr>
+                            <tr><td colspan="7" class="text-center text-muted py-4">{{ __('V tomto měsíci nic.') }}</td></tr>
                         @endforelse
                     </tbody>
                 </table>

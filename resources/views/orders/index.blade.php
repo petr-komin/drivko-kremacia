@@ -46,6 +46,9 @@
                     <div class="d-flex flex-wrap gap-2 align-items-center">
                         <strong>{{ $order->pet_name }}</strong>
                         @include('partials.status-badge')
+                        @if($order->isPaid())
+                            <span class="badge text-bg-light border text-success"><i class="bi bi-cash-coin me-1"></i>{{ __('zaplaceno') }}</span>
+                        @endif
                     </div>
                     <div class="small text-muted text-truncate">
                         {{ $order->number }}@if($order->case_number) · {{ __('případ') }} {{ $order->case_number }}@endif

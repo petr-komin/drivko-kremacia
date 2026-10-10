@@ -437,4 +437,25 @@ class OrderFlowTest extends TestCase
 
         $this->get(route('orders.show', $order))->assertSee('Dub')->assertSee('Buk');
     }
+
+    public function test_admin_marks_order_paid_and_can_fix_the_date(): void
+    {
+        $order = $this->createOrder();
+
+        $this->post(route('orders.paid', $order), ['paid' => 1])->assertForbidden();
+
+        $this->actingAs($this->admin);
+        $this->travelTo('2026-10-10 14:30:00');
+        $this->post(route('orders.paid', $order), ['paid' => 1])->assertRedirect();
+        $this->assertSame('2026-10-10 14:30', $order->fresh()->paid_at->format('Y-m-d H:i'));
+        $this->assertSame(Order::STATUS_NEW, $order->fresh()->status);
+
+        // Oprava data, pak zrušení
+        $this->post(route('orders.paid', $order), ['paid' => 1, 'paid_at' => '2026-10-02T09:15']);
+        $this->assertSame('2026-10-02 09:15', $order->fresh()->paid_at->format('Y-m-d H:i'));
+        $this->get(route('orders.show', $order))->assertSee('2. 10. 2026 09:15')->assertSee('10. 10. 2026 14:30');
+
+        $this->post(route('orders.paid', $order), ['paid' => 0]);
+        $this->assertNull($order->fresh()->paid_at);
+    }
 }

@@ -65,6 +65,8 @@
                     @if($order->layout_label)
                         <dt class="col-5 text-muted fw-normal">{{ __('Rozložení') }}</dt><dd class="col-7">{{ $order->layout_label }}</dd>
                     @endif
+                    <dt class="col-5 text-muted fw-normal">{{ __('Zaplaceno') }}</dt>
+                    <dd class="col-7 {{ $order->isPaid() ? 'fw-semibold text-success' : '' }}">{{ $order->isPaid() ? $order->paid_at->format('j. n. Y H:i') : __('ne') }}</dd>
                     @foreach(['started_at' => __('Ve výrobě od'), 'finished_at' => __('Dokončeno'), 'handed_over_at' => __('Předáno'), 'cancelled_at' => __('Zrušeno')] as $col => $label)
                         @if($order->{$col})
                             <dt class="col-5 text-muted fw-normal">{{ $label }}</dt><dd class="col-7">{{ $order->{$col}->format('j. n. Y') }}</dd>
@@ -126,6 +128,30 @@
                                @checked($order->notify) onchange="this.form.submit()">
                         <label class="form-check-label small" for="notify-switch">{{ __('Posílat e-maily k této zakázce') }}</label>
                     </form>
+
+                    {{-- Zaplaceno: nezávislé na stavu; zaškrtnutí zapíše teď, datum jde opravit --}}
+                    <form method="POST" action="{{ route('orders.paid', $order) }}" class="mb-3">
+                        @csrf
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <div class="form-check mb-0">
+                                <input type="hidden" name="paid" value="0">
+                                <input type="checkbox" class="form-check-input" name="paid" value="1" id="paid-check"
+                                       @checked($order->isPaid()) onchange="this.form.submit()">
+                                <label class="form-check-label fw-semibold" for="paid-check">{{ __('Zaplaceno') }}</label>
+                            </div>
+                            @if($order->isPaid())
+                                <a href="#paid-edit" class="small text-brown" data-bs-toggle="collapse">{{ $order->paid_at->format('j. n. Y H:i') }} <i class="bi bi-pencil"></i></a>
+                            @endif
+                        </div>
+                        @if($order->isPaid())
+                            <div class="collapse mt-2" id="paid-edit">
+                                <div class="input-group input-group-sm">
+                                    <input type="datetime-local" name="paid_at" class="form-control" value="{{ $order->paid_at->format('Y-m-d\TH:i') }}">
+                                    <button class="btn btn-outline-brown">{{ __('Uložit datum') }}</button>
+                                </div>
+                            </div>
+                        @endif
+                    </form>
                     <form method="POST" action="{{ route('orders.status', $order) }}" enctype="multipart/form-data" data-uploading="{{ __('Ukládám…') }}">
                         @csrf
                         <label class="form-label small" for="status">{{ __('Stav') }}</label>
@@ -160,7 +186,7 @@
                             <div class="msg-system">
                                 <i class="bi bi-info-circle me-1"></i>{{ $message->text() }} · {{ $message->created_at->format('j. n. H:i') }}
                                 @if($changes = $message->changes())
-                                    <ul class="list-unstyled small mb-0 mt-1 text-start d-inline-block">
+                                    <ul class="list-unstyled small mb-0 mt-1">
                                         @foreach($changes as $change)
                                             <li><span class="fw-semibold">{{ $change['label'] }}:</span>
                                                 <span class="text-decoration-line-through">{{ $change['old'] }}</span> → {{ $change['new'] }}</li>

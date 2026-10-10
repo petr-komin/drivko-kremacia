@@ -47,6 +47,7 @@ class Order extends Model
         'finished_at'      => 'datetime',
         'handed_over_at'   => 'datetime',
         'cancelled_at'     => 'datetime',
+        'paid_at'          => 'datetime',
         'last_activity_at' => 'datetime',
     ];
 
@@ -115,6 +116,7 @@ class Order extends Model
         'price_eur'       => 'Cena',
         'note'            => 'Poznámka',
         'notify'          => 'Posílat e-maily',
+        'paid_at'         => 'Zaplaceno',
     ];
 
     /** Hodnota pole k zobrazení v jazyce čtenáře. */
@@ -132,6 +134,7 @@ class Order extends Model
             'urn_lines'                         => self::linesLabel((array) $value),
             'layout'                            => isset(self::LAYOUTS[$value]) ? __(self::LAYOUTS[$value]) : (string) $value,
             'price_eur'                         => self::formatEur($value),
+            'paid_at'                           => \Illuminate\Support\Carbon::parse($value)->timezone(config('app.timezone'))->format('j. n. Y H:i'),
             default                             => (string) $value,
         };
     }
@@ -268,6 +271,11 @@ class Order extends Model
     public function getStatusIconAttribute(): string
     {
         return self::STATUSES[$this->status][2] ?? 'bi-circle';
+    }
+
+    public function isPaid(): bool
+    {
+        return $this->paid_at !== null;
     }
 
     public function isOpen(): bool
