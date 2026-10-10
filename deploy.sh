@@ -1,23 +1,16 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-# Okno konzole (spuštění poklepáním / z menu) se po skončení samo zavře –
-# před koncem počkat na Enter, ať je vidět výsledek i případná chyba.
-# Bez terminálu (CI, přesměrování) nebo s NO_PAUSE=1 se nečeká.
-pause_before_exit() {
+# Spuštěno mimo shell (poklepáním / z menu)? Po skončení nechat okno otevřené
+# s běžným promptem, jako by se to psalo ručně. Z terminálu se nic nemění.
+keep_window_open() {
   local status=$?
-  if [[ -t 0 && -z "${NO_PAUSE:-}" ]]; then
-    echo
-    if [[ $status -eq 0 ]]; then
-      printf '[deploy] Hotovo. '
-    else
-      printf '[deploy] SELHALO (kód %s) – viz výpis výše. ' "$status"
-    fi
-    read -r -p 'Stiskni Enter pro zavření okna…' _ || true
+  if [[ -t 0 ]] && ! ps -o comm= -p "$PPID" | grep -qE '^-?(ba|z|fi|da|k|tc)?sh$'; then
+    exec "${SHELL:-bash}" -i
   fi
   exit "$status"
 }
-trap pause_before_exit EXIT
+trap keep_window_open EXIT
 
 CONFIG_FILE="${1:-deploy/deploy.env}"
 
