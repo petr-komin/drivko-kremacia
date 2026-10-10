@@ -40,10 +40,29 @@ class OrderMessage extends Model
         return isset(self::EVENTS[$event]) ? __(self::EVENTS[$event], $this->eventParams()) : $this->body;
     }
 
+    /**
+     * Změny zadání u události „edited“ v jazyce čtenáře.
+     *
+     * @return list<array{label: string, old: string, new: string}>
+     */
+    public function changes(): array
+    {
+        $changes = [];
+        foreach ($this->meta['changes'] ?? [] as $field => [$old, $new]) {
+            $changes[] = [
+                'label' => __(Order::FIELD_LABELS[$field] ?? $field),
+                'old'   => Order::formatField($field, $old),
+                'new'   => Order::formatField($field, $new),
+            ];
+        }
+
+        return $changes;
+    }
+
     private function eventParams(?string $locale = null): array
     {
         $params = $this->meta;
-        unset($params['event']);
+        unset($params['event'], $params['changes']);
 
         if (isset($params['status'])) {
             $params['status'] = __(Order::STATUSES[$params['status']][0] ?? $params['status'], [], $locale);

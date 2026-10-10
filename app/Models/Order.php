@@ -90,14 +90,50 @@ class Order extends Model
     /** „Bobík (velké) / 2012–2026 (malé)“ – do CSV. */
     public function urnTextWithSizes(): ?string
     {
-        if (! $this->hasUrnText()) {
-            return null;
+        return $this->hasUrnText() ? self::linesLabel($this->urn_lines) : null;
+    }
+
+    public static function linesLabel(array $lines): string
+    {
+        return implode(' / ', array_map(
+            fn ($l) => ($l['text'] ?? '') . ' (' . mb_strtolower(self::textSizeLabel($l['size'] ?? null)) . ')',
+            $lines,
+        ));
+    }
+
+    /** Pole zakázky => popisek (klíč překladu) – výpis změn ve vlákně. */
+    public const FIELD_LABELS = [
+        'pet_name'        => 'Název',
+        'case_number'     => 'Číslo případu',
+        'wood_type_id'    => 'Dřevo',
+        'volume_ml'       => 'Objem',
+        'inner_width_cm'  => 'Vnitřní šířka',
+        'inner_height_cm' => 'Vnitřní výška',
+        'with_paw'        => 'Otisk tlapky',
+        'urn_lines'       => 'Text na urnu',
+        'layout'          => 'Rozložení',
+        'price_eur'       => 'Cena',
+        'note'            => 'Poznámka',
+        'notify'          => 'Posílat e-maily',
+    ];
+
+    /** Hodnota pole k zobrazení v jazyce čtenáře. */
+    public static function formatField(string $field, mixed $value): string
+    {
+        if ($value === null || $value === '' || $value === []) {
+            return '–';
         }
 
-        return implode(' / ', array_map(
-            fn ($l) => $l['text'] . ' (' . mb_strtolower(self::textSizeLabel($l['size'])) . ')',
-            $this->urn_lines,
-        ));
+        return match ($field) {
+            'wood_type_id'                      => WoodType::find($value)?->label ?? '–',
+            'volume_ml'                         => $value . ' ml',
+            'inner_width_cm', 'inner_height_cm' => rtrim(rtrim(number_format((float) $value, 1, ',', ''), '0'), ',') . ' cm',
+            'with_paw', 'notify'                => $value ? __('ano') : __('ne'),
+            'urn_lines'                         => self::linesLabel((array) $value),
+            'layout'                            => isset(self::LAYOUTS[$value]) ? __(self::LAYOUTS[$value]) : (string) $value,
+            'price_eur'                         => self::formatEur($value),
+            default                             => (string) $value,
+        };
     }
 
     public static function textSizeLabel(?string $size): string

@@ -141,11 +141,14 @@ class OrderController extends Controller
             $order->price_eur = $order->calculatePrice();
         }
 
-        $changes = array_keys($order->getDirty());
+        // Co se změnilo (původní → nová hodnota) – zapíše se do vlákna
+        $changes = collect(array_keys($order->getDirty()))
+            ->mapWithKeys(fn ($field) => [$field => [$order->getOriginal($field), $order->{$field}]])
+            ->all();
 
         if ($changes) {
             $order->save();
-            OrderMessage::system($order, 'edited', ['name' => $request->user()->name]);
+            OrderMessage::system($order, 'edited', ['name' => $request->user()->name, 'changes' => $changes]);
             $order->touchActivity();
         }
 

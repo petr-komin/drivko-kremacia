@@ -416,4 +416,25 @@ class OrderFlowTest extends TestCase
 
         $this->assertNull(Order::firstOrFail()->price_eur);
     }
+
+    public function test_edit_records_what_changed_in_thread(): void
+    {
+        $order = $this->createOrder();
+        $oak = WoodType::create(['name' => 'Buk']);
+
+        $this->put(route('orders.update', $order), [
+            'pet_name' => 'Rexík', 'case_number' => 'K-2026-15', 'wood_type_id' => $oak->id, 'volume_ml' => 1500,
+            'note' => 'Levá přední', 'with_paw' => 1, 'urn_lines' => [['text' => 'Rexík', 'size' => 'L']],
+        ])->assertSessionHasNoErrors();
+
+        $changes = collect($order->messages()->where('is_system', true)->latest('id')->first()->changes())
+            ->mapWithKeys(fn ($c) => [$c['label'] => $c['old'] . ' → ' . $c['new']]);
+
+        $this->assertSame('Rex → Rexík', $changes['Název']);
+        $this->assertSame('Dub → Buk', $changes['Dřevo']);
+        $this->assertSame('– → Rexík (velké)', $changes['Text na urnu']);
+        $this->assertArrayNotHasKey('Objem', $changes);
+
+        $this->get(route('orders.show', $order))->assertSee('Dub')->assertSee('Buk');
+    }
 }

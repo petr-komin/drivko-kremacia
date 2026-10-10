@@ -159,6 +159,14 @@
                         @if($message->is_system)
                             <div class="msg-system">
                                 <i class="bi bi-info-circle me-1"></i>{{ $message->text() }} · {{ $message->created_at->format('j. n. H:i') }}
+                                @if($changes = $message->changes())
+                                    <ul class="list-unstyled small mb-0 mt-1 text-start d-inline-block">
+                                        @foreach($changes as $change)
+                                            <li><span class="fw-semibold">{{ $change['label'] }}:</span>
+                                                <span class="text-decoration-line-through">{{ $change['old'] }}</span> → {{ $change['new'] }}</li>
+                                        @endforeach
+                                    </ul>
+                                @endif
                             </div>
                         @else
                             <div class="msg {{ $message->user_id === auth()->id() ? 'msg-mine' : 'msg-other border' }}">
