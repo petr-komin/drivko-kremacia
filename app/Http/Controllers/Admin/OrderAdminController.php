@@ -74,6 +74,16 @@ class OrderAdminController extends Controller
             : __('Uloženo.'));
     }
 
+    /** Zapnutí / vypnutí e-mailů k zakázce (zpětný zápis starších zakázek). */
+    public function updateNotify(Request $request, Order $order)
+    {
+        $order->forceFill(['notify' => $request->boolean('notify')])->save();
+
+        return back()->with('success', $order->notify
+            ? __('E-maily k zakázce jsou zapnuté.')
+            : __('E-maily k zakázce jsou vypnuté.'));
+    }
+
     /** Všechny fotky zakázky v jednom ZIPu – podklady i hotový kus. */
     public function downloadZip(Order $order)
     {

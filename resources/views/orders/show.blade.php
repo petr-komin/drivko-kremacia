@@ -117,6 +117,13 @@
             <div class="card mb-3 border-start border-4" style="border-color: var(--brown) !important;">
                 <div class="card-body">
                     <h2 class="h6 fw-bold"><i class="bi bi-hammer me-1"></i>{{ __('Dílna') }}</h2>
+                    <form method="POST" action="{{ route('orders.notify', $order) }}" class="form-check form-switch mb-3">
+                        @csrf
+                        <input type="hidden" name="notify" value="0">
+                        <input type="checkbox" class="form-check-input" role="switch" name="notify" value="1" id="notify-switch"
+                               @checked($order->notify) onchange="this.form.submit()">
+                        <label class="form-check-label small" for="notify-switch">{{ __('Posílat e-maily k této zakázce') }}</label>
+                    </form>
                     <form method="POST" action="{{ route('orders.status', $order) }}" enctype="multipart/form-data" data-uploading="{{ __('Ukládám…') }}">
                         @csrf
                         <label class="form-label small" for="status">{{ __('Stav') }}</label>

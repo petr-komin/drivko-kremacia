@@ -39,6 +39,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     // ─── Dílna ───────────────────────────────────────────────────────────────
     Route::middleware('admin')->group(function () {
         Route::post('/zakazky/{order}/stav', [OrderAdminController::class, 'updateStatus'])->name('orders.status');
+        Route::post('/zakazky/{order}/upozorneni', [OrderAdminController::class, 'updateNotify'])->name('orders.notify');
         Route::get('/zakazky/{order}/fotky.zip', [OrderAdminController::class, 'downloadZip'])->name('orders.zip');
 
         Route::get('/prehled', [ReportController::class, 'index'])->name('report.index');

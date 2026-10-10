@@ -347,4 +347,15 @@ class OrderFlowTest extends TestCase
         Mail::assertSent(OrderUpdateMail::class);
         $this->get(route('orders.create'))->assertDontSee('Posílat e-maily k této zakázce');
     }
+
+    public function test_admin_toggles_emails_on_order_detail(): void
+    {
+        $order = $this->createOrder();
+
+        $this->post(route('orders.notify', $order), ['notify' => 0])->assertForbidden();
+
+        $this->actingAs($this->admin)->get(route('orders.show', $order))->assertSee('Posílat e-maily k této zakázce');
+        $this->post(route('orders.notify', $order), ['notify' => 0])->assertRedirect();
+        $this->assertFalse($order->fresh()->notify);
+    }
 }
