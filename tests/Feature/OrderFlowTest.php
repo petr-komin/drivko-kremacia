@@ -358,4 +358,13 @@ class OrderFlowTest extends TestCase
         $this->post(route('orders.notify', $order), ['notify' => 0])->assertRedirect();
         $this->assertFalse($order->fresh()->notify);
     }
+
+    public function test_default_tab_is_all_for_client_and_open_for_admin(): void
+    {
+        $order = $this->createOrder();
+        $order->moveTo(Order::STATUS_HANDED_OVER);
+
+        $this->get(route('orders.index'))->assertSee('Rex');
+        $this->actingAs($this->admin)->get(route('orders.index'))->assertDontSee('Rex');
+    }
 }

@@ -24,7 +24,9 @@ class OrderController extends Controller
 
     public function index(Request $request)
     {
-        $filter = array_key_exists($request->query('stav'), self::FILTERS) ? $request->query('stav') : 'open';
+        // Výchozí záložka: dílna rozpracované (co je potřeba udělat), kremace všechno
+        $default = $request->user()->isAdmin() ? 'open' : 'all';
+        $filter = array_key_exists($request->query('stav'), self::FILTERS) ? $request->query('stav') : $default;
         $search = trim((string) $request->query('q'));
 
         $orders = Order::query()
