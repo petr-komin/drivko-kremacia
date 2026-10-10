@@ -18,3 +18,6 @@ Popis, spuštění a role: viz [CLAUDE.md](CLAUDE.md).
 ## Další nasazení
 Jen `./deploy.sh` – nahraje kód, přestaví Docker obraz, spustí migrace a obnoví cache.
 Fotky (`storage/`) a `.env` na serveru zůstávají.
+
+## Licence
+MIT – viz [LICENSE](LICENSE).
