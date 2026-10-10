@@ -10,13 +10,23 @@ use Illuminate\Support\Str;
 
 class WoodType extends Model
 {
-    protected $fillable = ['name', 'name_sk', 'active', 'sort_order'];
+    protected $fillable = ['name', 'name_sk', 'price_small_eur', 'price_large_eur', 'active', 'sort_order'];
 
     protected $casts = [
         'active'     => 'boolean',
         'is_default' => 'boolean',
         'sort_order' => 'integer',
+        'price_small_eur' => 'decimal:2',
+        'price_large_eur' => 'decimal:2',
     ];
+
+    /** Cena dřeva podle objemu (do Order::PRICE_SMALL_MAX_ML včetně / nad); null = ceník nevyplněný. */
+    public function priceFor(int $volumeMl): ?float
+    {
+        $price = $volumeMl <= Order::PRICE_SMALL_MAX_ML ? $this->price_small_eur : $this->price_large_eur;
+
+        return $price === null ? null : (float) $price;
+    }
 
     /** Název v jazyce prostředí; bez slovenského názvu česky. */
     public function getLabelAttribute(): string

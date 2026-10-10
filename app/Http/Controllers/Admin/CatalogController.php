@@ -65,10 +65,18 @@ class CatalogController extends Controller
         $data = $request->validate([
             'name'       => 'required|string|max:80',
             'name_sk'    => 'nullable|string|max:80',
+            'price_small_eur' => 'nullable|numeric|min:0|max:99999',
+            'price_large_eur' => 'nullable|numeric|min:0|max:99999',
             'sort_order' => 'nullable|integer|min:0|max:9999',
             'photo'      => 'nullable|file|mimes:' . implode(',', Photos::EXTENSIONS) . '|max:' . Photos::MAX_KB,
         ]);
 
-        return ['name' => $data['name'], 'name_sk' => $data['name_sk'] ?? null, 'sort_order' => (int) ($data['sort_order'] ?? 0)];
+        return [
+            'name'            => $data['name'],
+            'name_sk'         => $data['name_sk'] ?? null,
+            'price_small_eur' => $data['price_small_eur'] ?? null,
+            'price_large_eur' => $data['price_large_eur'] ?? null,
+            'sort_order'      => (int) ($data['sort_order'] ?? 0),
+        ];
     }
 }

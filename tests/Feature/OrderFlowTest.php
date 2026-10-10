@@ -381,4 +381,39 @@ class OrderFlowTest extends TestCase
         $this->post(route('orders.store'), $base + ['volume_ml' => 15625, 'inner_width_cm' => 25, 'inner_height_cm' => 25])
             ->assertSessionHasNoErrors();
     }
+
+    public function test_price_from_wood_by_volume_plus_engraving(): void
+    {
+        $this->wood->update(['price_small_eur' => 35, 'price_large_eur' => 49.5]);
+        $base = ['pet_name' => 'Rex', 'wood_type_id' => $this->wood->id, 'with_paw' => 0];
+        $this->actingAs($this->client);
+
+        // Do 1500 ml včetně, bez gravírování
+        $this->post(route('orders.store'), $base + ['volume_ml' => 1500])->assertSessionHasNoErrors();
+        $this->assertSame('35.00', Order::latest('id')->first()->price_eur);
+
+        // Nad 1500 ml s textem → velká cena + 10 €
+        $this->post(route('orders.store'), $base + ['volume_ml' => 1501, 'urn_lines' => [['text' => 'Rex', 'size' => 'L']]]);
+        $order = Order::latest('id')->first();
+        $this->assertSame('59.50', $order->price_eur);
+        $this->get(route('orders.show', $order))->assertSee('59,50 €');
+
+        // Změna ceníku starou zakázku nepřepíše, úprava objemu ano
+        $this->wood->update(['price_large_eur' => 100]);
+        $this->assertSame('59.50', $order->fresh()->price_eur);
+
+        $this->actingAs($this->admin)->put(route('orders.update', $order), [
+            'pet_name' => 'Rex', 'wood_type_id' => $this->wood->id, 'volume_ml' => 1000, 'with_paw' => 1,
+        ])->assertSessionHasNoErrors();
+        $this->assertSame('45.00', $order->fresh()->price_eur);
+    }
+
+    public function test_order_without_wood_price_has_no_price(): void
+    {
+        $this->actingAs($this->client)->post(route('orders.store'), [
+            'pet_name' => 'Rex', 'wood_type_id' => $this->wood->id, 'volume_ml' => 800, 'with_paw' => 0,
+        ]);
+
+        $this->assertNull(Order::firstOrFail()->price_eur);
+    }
 }

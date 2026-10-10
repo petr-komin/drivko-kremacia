@@ -31,7 +31,7 @@ class Order extends Model
 
     protected $fillable = [
         'case_number', 'pet_name', 'wood_type_id', 'volume_ml', 'inner_width_cm', 'inner_height_cm',
-        'with_paw', 'urn_lines', 'layout', 'note', 'notify',
+        'with_paw', 'urn_lines', 'layout', 'price_eur', 'note', 'notify',
         'status', 'created_by', 'last_activity_at',
     ];
 
@@ -39,6 +39,7 @@ class Order extends Model
         'volume_ml'        => 'integer',
         'with_paw'         => 'boolean',
         'notify'           => 'boolean',
+        'price_eur'        => 'decimal:2',
         'urn_lines'        => 'array',
         'inner_width_cm'   => 'decimal:1',
         'inner_height_cm'  => 'decimal:1',
@@ -114,6 +115,39 @@ class Order extends Model
     public const LID_PLUG_CM = 1.5;
     public const LID_TOP_CM = 0.8;
     public const TOP_CM = self::LID_PLUG_CM + self::LID_TOP_CM;
+
+    // ── Cena ─────────────────────────────────────────────────────────────────
+
+    /** Hranice ceníku dřeva: do 1500 ml včetně „malá“ cena, nad ní „velká“. */
+    public const PRICE_SMALL_MAX_ML = 1500;
+
+    /** Příplatek za gravírování (tlapka, text nebo obojí) v eurech. */
+    public const ENGRAVING_EUR = 10;
+
+    public function hasEngraving(): bool
+    {
+        return $this->with_paw || $this->hasUrnText();
+    }
+
+    /** Cena podle aktuálního ceníku: dřevo podle objemu + gravírování. Null, když dřevo nemá cenu. */
+    public function calculatePrice(): ?float
+    {
+        $wood = $this->woodType()->first()?->priceFor((int) $this->volume_ml);
+
+        return $wood === null ? null : $wood + ($this->hasEngraving() ? self::ENGRAVING_EUR : 0);
+    }
+
+    /** „45 €“, „45,50 €“ */
+    public static function formatEur(float|string|null $amount): string
+    {
+        if ($amount === null) {
+            return '–';
+        }
+
+        $decimals = fmod((float) $amount, 1.0) == 0.0 ? 0 : 2;
+
+        return number_format((float) $amount, $decimals, ',', ' ') . ' €';
+    }
 
     /** Rozsah vnitřních rozměrů (šířka i výška) v cm; z nich plyne i rozsah objemu (5³ až 25³). */
     public const MIN_INNER_CM = 5;

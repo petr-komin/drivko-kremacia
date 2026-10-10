@@ -8,6 +8,7 @@
     {{ __('Použité dřevo nejde smazat – nepotřebné vypněte a přestane se nabízet u nových zakázek.') }}
     {{ __('Fotka dřeva se kremaci ukazuje při zadávání zakázky, výchozí dřevo je předvybrané.') }}
     {{ __('Slovenský název se ukáže těm, kdo mají prostředí ve slovenštině.') }}
+    {{ __('Cena urny = cena dřeva podle objemu + :eur € za gravírování (tlapka, text nebo obojí).', ['eur' => \App\Models\Order::ENGRAVING_EUR]) }}
 </p>
 
 @error('photo')<div class="alert alert-danger py-2">{{ $message }}</div>@enderror
@@ -36,6 +37,19 @@
                         </div>
                         <div class="col-auto"><button class="btn btn-sm btn-outline-brown"><i class="bi bi-check-lg"></i></button></div>
 
+                        <div class="col-12 d-flex flex-wrap align-items-center gap-2 small">
+                            <span class="text-muted"><i class="bi bi-currency-euro"></i> {{ __('Cena') }}:</span>
+                            <div class="input-group input-group-sm w-auto">
+                                <span class="input-group-text">≤ 1500 ml</span>
+                                <input type="number" name="price_small_eur" value="{{ $item->price_small_eur }}" class="form-control" style="width:6rem" min="0" step="0.01" inputmode="decimal">
+                                <span class="input-group-text">€</span>
+                            </div>
+                            <div class="input-group input-group-sm w-auto">
+                                <span class="input-group-text">&gt; 1500 ml</span>
+                                <input type="number" name="price_large_eur" value="{{ $item->price_large_eur }}" class="form-control" style="width:6rem" min="0" step="0.01" inputmode="decimal">
+                                <span class="input-group-text">€</span>
+                            </div>
+                        </div>
                         <div class="col-12 d-flex flex-wrap align-items-center gap-3">
                             <input type="file" name="photo" accept="image/*,.heic,.heif" class="form-control form-control-sm w-auto flex-grow-1"
                                    title="{{ $item->photo_path ? __('Vyměnit fotku') : __('Nahrát fotku') }}">
@@ -61,6 +75,19 @@
                     <div class="col"><input name="name_sk" class="form-control form-control-sm" placeholder="{{ __('slovensky') }}"></div>
                     <div class="col-2"><input type="number" name="sort_order" class="form-control form-control-sm" min="0" placeholder="{{ __('pořadí') }}"></div>
                     <div class="col-auto"><button class="btn btn-sm btn-brown"><i class="bi bi-plus-lg"></i></button></div>
+                    <div class="col-12 d-flex flex-wrap align-items-center gap-2 small">
+                        <span class="text-muted"><i class="bi bi-currency-euro"></i> {{ __('Cena') }}:</span>
+                        <div class="input-group input-group-sm w-auto">
+                            <span class="input-group-text">≤ 1500 ml</span>
+                            <input type="number" name="price_small_eur" value="" class="form-control" style="width:6rem" min="0" step="0.01" inputmode="decimal">
+                            <span class="input-group-text">€</span>
+                        </div>
+                        <div class="input-group input-group-sm w-auto">
+                            <span class="input-group-text">&gt; 1500 ml</span>
+                            <input type="number" name="price_large_eur" value="" class="form-control" style="width:6rem" min="0" step="0.01" inputmode="decimal">
+                            <span class="input-group-text">€</span>
+                        </div>
+                    </div>
                     <div class="col-12 d-flex flex-wrap align-items-center gap-3">
                         <input type="file" name="photo" accept="image/*,.heic,.heif" class="form-control form-control-sm w-auto flex-grow-1" title="{{ __('Fotka dřeva (nepovinná)') }}">
                         <div class="form-check small mb-0">

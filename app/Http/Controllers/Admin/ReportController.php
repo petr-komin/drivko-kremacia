@@ -32,6 +32,7 @@ class ReportController extends Controller
         return view('admin.report', [
             'orders'  => $orders,
             'summary' => $summary,
+            'total'   => $orders->sum(fn (Order $o) => (float) $o->price_eur),
             'month'   => $month,
             'basis'   => $basis,
             'bases'   => array_map(fn ($label) => __($label), self::BASES),
@@ -49,7 +50,7 @@ class ReportController extends Controller
             $out = fopen('php://output', 'w');
             // BOM – Excel jinak otevře češtinu / slovenštinu rozsypanou
             fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, array_map(fn ($h) => __($h), ['Zakázka', 'Číslo případu', 'Název', 'Dřevo', 'Objem (ml)', 'Vnitřní rozměry', 'Vnější rozměry', 'Tlapka', 'Text na urnu', 'Rozložení', 'Zadáno', 'Dokončeno', 'Předáno']), ';');
+            fputcsv($out, array_map(fn ($h) => __($h), ['Zakázka', 'Číslo případu', 'Název', 'Dřevo', 'Objem (ml)', 'Cena (€)', 'Vnitřní rozměry', 'Vnější rozměry', 'Tlapka', 'Text na urnu', 'Rozložení', 'Zadáno', 'Dokončeno', 'Předáno']), ';');
 
             foreach ($orders as $o) {
                 fputcsv($out, [
@@ -58,6 +59,7 @@ class ReportController extends Controller
                     $o->pet_name,
                     $o->woodType->label,
                     $o->volume_ml,
+                    $o->price_eur !== null ? number_format((float) $o->price_eur, 2, ',', '') : null,
                     $o->dimensionsLabel(),
                     $o->dimensionsLabel(outer: true),
                     $o->with_paw ? __('ano') : __('ne'),

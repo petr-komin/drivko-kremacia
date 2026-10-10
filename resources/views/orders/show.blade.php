@@ -45,6 +45,8 @@
                         @endif
                         {{ $order->woodType->label }}</dd>
                     <dt class="col-5 text-muted fw-normal">{{ __('Objem') }}</dt><dd class="col-7 fw-semibold">{{ $order->volume_label }}</dd>
+                    <dt class="col-5 text-muted fw-normal">{{ __('Cena') }}</dt><dd class="col-7 fw-semibold">{{ \App\Models\Order::formatEur($order->price_eur) }}
+                        @if($order->price_eur !== null && $order->hasEngraving())<span class="small text-muted fw-normal">({{ __('vč. gravírování') }})</span>@endif</dd>
                     @if($order->hasInnerDimensions())
                         <dt class="col-5 text-muted fw-normal">{{ __('Vnitřní rozměry') }}</dt>
                         <dd class="col-7 fw-semibold">{{ $order->dimensionsLabel() }}

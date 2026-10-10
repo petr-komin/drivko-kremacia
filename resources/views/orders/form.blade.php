@@ -110,6 +110,7 @@
                             @foreach($woodTypes as $wood)
                                 <input type="radio" class="btn-check" name="wood_type_id" id="wood{{ $wood->id }}" value="{{ $wood->id }}"
                                        data-name="{{ $wood->name }}" data-photo="{{ $wood->photoUrl('large') }}"
+                                       data-price-small="{{ $wood->price_small_eur }}" data-price-large="{{ $wood->price_large_eur }}"
                                        @checked((int) old('wood_type_id', $order->wood_type_id) === $wood->id) required>
                                 <label class="btn btn-outline-brown {{ $wood->photo_path ? 'wood-tile p-1' : '' }}" for="wood{{ $wood->id }}">
                                     @if($wood->photo_path)
@@ -171,6 +172,14 @@
                                   placeholder="{{ __('Např. kterou tlapku použít, termín, zvláštní přání…') }}">{{ old('note', $order->note) }}</textarea>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        {{-- Orientační cena podle ceníku; uloží se při odeslání --}}
+        <div class="card mb-3">
+            <div class="card-body d-flex flex-wrap align-items-baseline justify-content-between gap-2">
+                <span class="fw-semibold"><i class="bi bi-currency-euro me-1"></i>{{ __('Cena') }}</span>
+                <span><span id="price-detail" class="small text-muted me-2"></span><strong id="price-total" class="fs-5">–</strong></span>
             </div>
         </div>
 
@@ -305,6 +314,39 @@
         form.addEventListener('input', refresh);
         form.addEventListener('change', refresh);
         window.addEventListener('urn-viewer-ready', refresh);
+        refresh();
+    })();
+</script>
+@endpush
+
+@push('scripts')
+<script>
+    // Cena: dřevo podle objemu (do / nad hranicí) + příplatek za gravírování (tlapka nebo text)
+    (() => {
+        const form = document.getElementById('volume_ml').form;
+        const LIMIT = {{ \App\Models\Order::PRICE_SMALL_MAX_ML }}, ENGRAVING = {{ \App\Models\Order::ENGRAVING_EUR }};
+        const t = {{ Js::from(['wood' => __('dřevo'), 'engraving' => __('gravírování'), 'none' => __('cena dřeva není v ceníku')]) }};
+        const eur = n => n.toLocaleString(document.documentElement.lang, { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }) + ' €';
+        const total = document.getElementById('price-total'), detail = document.getElementById('price-detail');
+
+        const refresh = () => {
+            const wood = form.querySelector('input[name=wood_type_id]:checked');
+            const ml = parseInt(document.getElementById('volume_ml').value, 10);
+            const engraving = document.getElementById('with_paw').checked
+                || [...document.querySelectorAll('#urn-lines input[type=text]')].some(i => i.value.trim());
+            const raw = wood && ml > 0 ? (ml <= LIMIT ? wood.dataset.priceSmall : wood.dataset.priceLarge) : null;
+
+            if (!wood || !(ml > 0)) { total.textContent = '–'; detail.textContent = ''; return; }
+            if (raw === '' || raw == null) { total.textContent = '–'; detail.textContent = t.none; return; }
+
+            const woodPrice = parseFloat(raw);
+            total.textContent = eur(woodPrice + (engraving ? ENGRAVING : 0));
+            detail.textContent = engraving ? `${t.wood} ${eur(woodPrice)} + ${t.engraving} ${eur(ENGRAVING)}` : '';
+        };
+
+        form.addEventListener('input', refresh);
+        form.addEventListener('change', refresh);
+        document.getElementById('urn-lines').addEventListener('urn-lines-changed', refresh);
         refresh();
     })();
 </script>

@@ -91,6 +91,7 @@ class OrderController extends Controller
                 'last_activity_at' => now(),
             ]);
 
+            $order->forceFill(['price_eur' => $order->calculatePrice()])->save();
             Photos::store($order, $request->file('photos', []), OrderPhoto::KIND_PAW);
 
             return $order;
@@ -134,6 +135,12 @@ class OrderController extends Controller
         $data = $this->normalize($request, $request->validate($this->rules($order)));
 
         $order->fill($data);
+
+        // Cenu přepočítat jen při změně toho, co ji určuje – jinak zůstává ta ze zadání
+        if ($order->isDirty(['wood_type_id', 'volume_ml', 'with_paw', 'urn_lines'])) {
+            $order->price_eur = $order->calculatePrice();
+        }
+
         $changes = array_keys($order->getDirty());
 
         if ($changes) {
