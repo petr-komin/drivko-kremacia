@@ -1,0 +1,55 @@
+<?php
+
+// Jen hlášky, které aplikace skutečně používá (stejné klíče jako lang/cs/validation.php).
+return [
+    'array'     => 'Pole :attribute má neplatný formát.',
+    'boolean'   => 'Pole :attribute musí byť áno, alebo nie.',
+    'email'     => 'Pole :attribute musí byť platná e-mailová adresa.',
+    'exists'    => 'Vybraná hodnota poľa :attribute nie je platná.',
+    'file'      => 'Pole :attribute musí byť súbor.',
+    'in'        => 'Vybraná hodnota poľa :attribute nie je platná.',
+    'integer'   => 'Pole :attribute musí byť celé číslo.',
+    'max'       => [
+        'array'   => 'Naraz je možné nahrať najviac :max súborov.',
+        'file'    => 'Súbor :attribute môže mať najviac :max kB.',
+        'numeric' => 'Pole :attribute môže byť najviac :max.',
+        'string'  => 'Pole :attribute môže mať najviac :max znakov.',
+    ],
+    'mimes'     => 'Súbor :attribute musí byť obrázok (:values).',
+    'min'       => [
+        'numeric' => 'Pole :attribute musí byť aspoň :min.',
+        'string'  => 'Pole :attribute musí mať aspoň :min znakov.',
+    ],
+    'numeric'   => 'Pole :attribute musí byť číslo.',
+    'password'  => [
+        'min' => 'Heslo musí mať aspoň :min znakov.',
+    ],
+    'required'  => 'Pole :attribute je povinné.',
+    'required_with' => 'Pole :attribute je povinné, keď je vyplnené pole :values.',
+    'string'    => 'Pole :attribute musí byť text.',
+    'unique'    => 'Hodnota poľa :attribute je už použitá.',
+    'uploaded'  => 'Súbor :attribute sa nepodarilo nahrať – je možno príliš veľký.',
+
+    'attributes' => [
+        'pet_name'     => 'názov',
+        'case_number'  => 'číslo prípadu',
+        'wood_type_id' => 'drevo',
+        'note'         => 'poznámka',
+        'photos'       => 'fotky',
+        'photos.*'     => 'fotka',
+        'body'         => 'správa',
+        'status'       => 'stav',
+        'name'         => 'meno',
+        'email'        => 'e-mail',
+        'password'     => 'heslo',
+        'role'         => 'rola',
+        'volume_ml'    => 'objem',
+        'sort_order'   => 'poradie',
+        'name_sk'      => 'slovenský názov',
+        'locale'       => 'jazyk',
+        'inner_width_cm'  => 'vnútorná šírka',
+        'inner_height_cm' => 'vnútorná výška',
+        'urn_lines'    => 'text na urnu',
+        'layout'       => 'rozloženie',
+    ],
+];

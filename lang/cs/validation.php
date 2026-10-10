@@ -1,0 +1,55 @@
+<?php
+
+// Jen hlášky, které aplikace skutečně používá.
+return [
+    'array'     => 'Pole :attribute má neplatný formát.',
+    'boolean'   => 'Pole :attribute musí být ano, nebo ne.',
+    'email'     => 'Pole :attribute musí být platná e-mailová adresa.',
+    'exists'    => 'Vybraná hodnota pole :attribute není platná.',
+    'file'      => 'Pole :attribute musí být soubor.',
+    'in'        => 'Vybraná hodnota pole :attribute není platná.',
+    'integer'   => 'Pole :attribute musí být celé číslo.',
+    'max'       => [
+        'array'   => 'Najednou jde nahrát nejvýš :max souborů.',
+        'file'    => 'Soubor :attribute může mít nejvýš :max kB.',
+        'numeric' => 'Pole :attribute může být nejvýš :max.',
+        'string'  => 'Pole :attribute může mít nejvýš :max znaků.',
+    ],
+    'mimes'     => 'Soubor :attribute musí být obrázek (:values).',
+    'min'       => [
+        'numeric' => 'Pole :attribute musí být alespoň :min.',
+        'string'  => 'Pole :attribute musí mít alespoň :min znaků.',
+    ],
+    'password'  => [
+        'min' => 'Heslo musí mít alespoň :min znaků.',
+    ],
+    'numeric'   => 'Pole :attribute musí být číslo.',
+    'required'  => 'Pole :attribute je povinné.',
+    'required_with' => 'Pole :attribute je povinné, když je vyplněné pole :values.',
+    'string'    => 'Pole :attribute musí být text.',
+    'unique'    => 'Hodnota pole :attribute už je použitá.',
+    'uploaded'  => 'Soubor :attribute se nepodařilo nahrát – je možná příliš velký.',
+
+    'attributes' => [
+        'pet_name'     => 'název',
+        'case_number'  => 'číslo případu',
+        'wood_type_id' => 'dřevo',
+        'note'         => 'poznámka',
+        'photos'       => 'fotky',
+        'photos.*'     => 'fotka',
+        'body'         => 'zpráva',
+        'status'       => 'stav',
+        'name'         => 'jméno',
+        'email'        => 'e-mail',
+        'password'     => 'heslo',
+        'role'         => 'role',
+        'volume_ml'    => 'objem',
+        'sort_order'   => 'pořadí',
+        'name_sk'      => 'slovenský název',
+        'locale'       => 'jazyk',
+        'inner_width_cm'  => 'vnitřní šířka',
+        'inner_height_cm' => 'vnitřní výška',
+        'urn_lines'    => 'text na urnu',
+        'layout'       => 'rozložení',
+    ],
+];

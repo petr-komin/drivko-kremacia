@@ -1,0 +1,16 @@
+# Produkce: jen PHP-FPM, nginx a PostgreSQL běží přímo na serveru (jako u e-shopu).
+# Port 9001 – 9000 už používá e-shop.
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: ${APP_CONTAINER:-kremacia_app}
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+    ports:
+      - "127.0.0.1:${PHP_FPM_PORT:-9001}:9000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
