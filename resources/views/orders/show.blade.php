@@ -12,7 +12,11 @@
 
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-2 mb-3">
     <div>
-        <h1 class="h4 fw-bold mb-1">{{ $order->pet_name }} @include('partials.status-badge')</h1>
+        <h1 class="h4 fw-bold mb-1">{{ $order->pet_name }} @include('partials.status-badge')
+            @if($isAdmin && ! $order->notify)
+                <span class="badge text-bg-light border" title="{{ __('K této zakázce se neposílají e-maily.') }}"><i class="bi bi-bell-slash me-1"></i>{{ __('bez e-mailů') }}</span>
+            @endif
+        </h1>
         <div class="text-muted small">
             {{ $order->number }}@if($order->case_number) · {{ __('případ') }} <strong>{{ $order->case_number }}</strong>@endif
             · {{ __('zadal(a)') }} {{ $order->author->name }} {{ $order->created_at->format('j. n. Y H:i') }}

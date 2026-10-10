@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Mail;
  * autor akce upozornění nedostane. Nedoručený e-mail nesmí shodit
  * uložení zakázky, proto se chyba jen zaloguje. Každý příjemce dostane
  * e-mail ve svém jazyce (users.locale); adresa mimo uživatele česky.
+ * Zakázka s vypnutými upozorněními (orders.notify – zpětný zápis) nic neposílá.
  */
 final class Notifier
 {
@@ -60,6 +61,10 @@ final class Notifier
 
     private static function send(array $recipients, Order $order, array $event, ?string $text = null, int $photos = 0): void
     {
+        if (! $order->notify) {
+            return;
+        }
+
         foreach ($recipients as $email => $locale) {
             try {
                 Mail::to($email)->locale($locale ?: config('app.locale'))

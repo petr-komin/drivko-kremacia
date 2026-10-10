@@ -318,4 +318,33 @@ class OrderFlowTest extends TestCase
 
         $this->post(route('orders.store'), $base + ['with_paw' => 0, 'layout' => 'nesmysl'])->assertSessionHasErrors('layout');
     }
+
+    public function test_admin_can_record_order_without_emails(): void
+    {
+        $this->actingAs($this->admin)->post(route('orders.store'), [
+            'pet_name' => 'Stará zakázka', 'wood_type_id' => $this->wood->id, 'volume_ml' => 800,
+            'with_paw' => 0, 'notify' => 0,
+        ])->assertRedirect();
+
+        $order = Order::firstOrFail();
+        $this->assertFalse($order->notify);
+
+        $this->post(route('orders.status', $order), ['status' => Order::STATUS_IN_PRODUCTION, 'body' => 'Zpětně']);
+        $this->post(route('messages.store', $order), ['body' => 'Poznámka']);
+        $this->get(route('orders.show', $order))->assertSee('bez e-mailů');
+
+        Mail::assertNothingSent();
+    }
+
+    public function test_client_cannot_turn_off_emails(): void
+    {
+        $this->actingAs($this->client)->post(route('orders.store'), [
+            'pet_name' => 'Rex', 'wood_type_id' => $this->wood->id, 'volume_ml' => 800,
+            'with_paw' => 0, 'notify' => 0,
+        ])->assertRedirect();
+
+        $this->assertTrue(Order::firstOrFail()->notify);
+        Mail::assertSent(OrderUpdateMail::class);
+        $this->get(route('orders.create'))->assertDontSee('Posílat e-maily k této zakázce');
+    }
 }

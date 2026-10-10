@@ -30,6 +30,18 @@
                         <label class="form-label" for="case_number">{{ __('Vaše číslo případu') }}</label>
                         <input type="text" name="case_number" id="case_number" value="{{ old('case_number', $order->case_number) }}" class="form-control" maxlength="64">
                     </div>
+                    @if(auth()->user()->isAdmin())
+                        {{-- Zpětný zápis starších zakázek: bez e-mailů kremaci ani dílně --}}
+                        <div class="col-12">
+                            <div class="form-check form-switch mb-0">
+                                <input type="hidden" name="notify" value="0">
+                                <input type="checkbox" class="form-check-input" role="switch" name="notify" value="1" id="notify"
+                                       @checked(old('notify', $order->exists ? $order->notify : true))>
+                                <label class="form-check-label" for="notify">{{ __('Posílat e-maily k této zakázce') }}</label>
+                            </div>
+                            <div class="form-text">{{ __('Vypněte u zpětně zapisovaných zakázek – změny stavu ani zprávy pak nikomu nepřijdou e-mailem.') }}</div>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

@@ -67,7 +67,7 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         // Fotka tlapky je povinná jen u urny s otiskem
-        $data = $this->normalize($request->validate($this->rules() + Photos::rules(required: $request->boolean('with_paw', true)), [
+        $data = $this->normalize($request, $request->validate($this->rules() + Photos::rules(required: $request->boolean('with_paw', true)), [
             'photos.required' => __('Přiložte alespoň jednu fotku tlapky (nebo zrušte otisk tlapky).'),
         ]));
 
@@ -83,6 +83,7 @@ class OrderController extends Controller
                 'urn_lines'        => $data['urn_lines'],
                 'layout'           => $data['layout'],
                 'note'             => $data['note'] ?? null,
+                'notify'           => $data['notify'] ?? true,
                 'status'           => Order::STATUS_NEW,
                 'created_by'       => $request->user()->id,
                 'last_activity_at' => now(),
@@ -128,7 +129,7 @@ class OrderController extends Controller
     {
         $this->authorizeEdit($request, $order);
 
-        $data = $this->normalize($request->validate($this->rules($order)));
+        $data = $this->normalize($request, $request->validate($this->rules($order)));
 
         $order->fill($data);
         $changes = array_keys($order->getDirty());
@@ -164,12 +165,19 @@ class OrderController extends Controller
             'urn_lines.*.size' => ['nullable', Rule::in(array_keys(Order::TEXT_SIZES))],
             'layout'       => ['nullable', Rule::in(array_keys(Order::LAYOUTS))],
             'note'         => 'nullable|string|max:5000',
+            'notify'       => 'boolean',
         ];
     }
 
-    /** Rozložení dává smysl jen u tlapky s textem; jinak se neukládá. */
-    private function normalize(array $data): array
+    /** Rozložení dává smysl jen u tlapky s textem; jinak se neukládá. E-maily vypíná jen dílna. */
+    private function normalize(Request $request, array $data): array
     {
+        if ($request->user()->isAdmin() && array_key_exists('notify', $data)) {
+            $data['notify'] = (bool) $data['notify'];
+        } else {
+            unset($data['notify']);
+        }
+
         $data['with_paw'] = (bool) ($data['with_paw'] ?? true);
         // Prázdné řádky pryč; bez velikosti = střední
         $lines = collect($data['urn_lines'] ?? [])

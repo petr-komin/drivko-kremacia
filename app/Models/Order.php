@@ -31,13 +31,14 @@ class Order extends Model
 
     protected $fillable = [
         'case_number', 'pet_name', 'wood_type_id', 'volume_ml', 'inner_width_cm', 'inner_height_cm',
-        'with_paw', 'urn_lines', 'layout', 'note',
+        'with_paw', 'urn_lines', 'layout', 'note', 'notify',
         'status', 'created_by', 'last_activity_at',
     ];
 
     protected $casts = [
         'volume_ml'        => 'integer',
         'with_paw'         => 'boolean',
+        'notify'           => 'boolean',
         'urn_lines'        => 'array',
         'inner_width_cm'   => 'decimal:1',
         'inner_height_cm'  => 'decimal:1',
