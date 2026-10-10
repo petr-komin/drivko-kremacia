@@ -127,10 +127,10 @@
                         <label class="form-label" for="volume_ml">{{ __('Objem urny') }} *</label>
                         <div class="input-group">
                             <input type="number" name="volume_ml" id="volume_ml" value="{{ old('volume_ml', $order->volume_ml) }}"
-                                   class="form-control" required min="50" max="50000" step="1" inputmode="numeric" placeholder="{{ __('např. 1500') }}">
+                                   class="form-control" required min="{{ \App\Models\Order::MIN_VOLUME_ML }}" max="{{ \App\Models\Order::MAX_VOLUME_ML }}" step="1" inputmode="numeric" placeholder="{{ __('např. 1500') }}">
                             <span class="input-group-text">ml</span>
                         </div>
-                        <div class="form-text">{{ __('1 litr = 1000 ml') }}</div>
+                        <div class="form-text">{{ __('1 litr = 1000 ml') }} · {{ __(':min až :max ml', ['min' => \App\Models\Order::MIN_VOLUME_ML, 'max' => number_format(\App\Models\Order::MAX_VOLUME_ML, 0, ',', ' ')]) }}</div>
                     </div>
 
                     {{-- Nepovinná pomůcka: objem z vnitřních rozměrů + informativní vnější velikost --}}
@@ -142,7 +142,7 @@
                                     <label class="form-label mb-0" for="calc_width">{{ __('Vnitřní šířka') }}</label>
                                     <div class="input-group input-group-sm">
                                         <input type="number" name="inner_width_cm" id="calc_width" value="{{ old('inner_width_cm', $order->inner_width_cm) }}"
-                                               class="form-control @error('inner_width_cm') is-invalid @enderror" min="1" max="100" step="0.1" inputmode="decimal">
+                                               class="form-control @error('inner_width_cm') is-invalid @enderror" min="{{ \App\Models\Order::MIN_INNER_CM }}" max="{{ \App\Models\Order::MAX_INNER_CM }}" step="0.1" inputmode="decimal">
                                         <span class="input-group-text">cm</span>
                                     </div>
                                     <div class="mt-1">{{ __('Vnější') }}: <strong id="outer_width">–</strong></div>
@@ -151,13 +151,13 @@
                                     <label class="form-label mb-0" for="calc_height">{{ __('Vnitřní výška') }}</label>
                                     <div class="input-group input-group-sm">
                                         <input type="number" name="inner_height_cm" id="calc_height" value="{{ old('inner_height_cm', $order->inner_height_cm) }}"
-                                               class="form-control @error('inner_height_cm') is-invalid @enderror" min="1" max="100" step="0.1" inputmode="decimal">
+                                               class="form-control @error('inner_height_cm') is-invalid @enderror" min="{{ \App\Models\Order::MIN_INNER_CM }}" max="{{ \App\Models\Order::MAX_INNER_CM }}" step="0.1" inputmode="decimal">
                                         <span class="input-group-text">cm</span>
                                     </div>
                                     <div class="mt-1">{{ __('Vnější') }}: <strong id="outer_height">–</strong></div>
                                 </div>
                             </div>
-                            <div class="mt-2 text-muted">{{ __('Půdorys je vždy čtverec. Zadejte šířku a výšku (dopočítá se objem), nebo šířku k objemu (dopočítá se výška). Vnější rozměry jsou orientační (stěny a dno 8 mm, víko 15 + 8 mm). Bez rozměrů je zvolí dílna podle objemu.') }}</div>
+                            <div class="mt-2 text-muted">{{ __('Šířka i výška :min–:max cm.', ['min' => \App\Models\Order::MIN_INNER_CM, 'max' => \App\Models\Order::MAX_INNER_CM]) }} {{ __('Půdorys je vždy čtverec. Zadejte šířku a výšku (dopočítá se objem), nebo šířku k objemu (dopočítá se výška). Vnější rozměry jsou orientační (stěny a dno 8 mm, víko 15 + 8 mm). Bez rozměrů je zvolí dílna podle objemu.') }}</div>
                         </div>
                     </div>
 

@@ -157,10 +157,10 @@ class OrderController extends Controller
             'pet_name'     => 'required|string|max:120',
             'case_number'  => 'nullable|string|max:64',
             'wood_type_id' => ['required', 'integer', $activeOr('wood_types', $order?->wood_type_id)],
-            'volume_ml'    => 'required|integer|min:50|max:50000',
+            'volume_ml'    => 'required|integer|min:' . Order::MIN_VOLUME_ML . '|max:' . Order::MAX_VOLUME_ML,
             // Rozměry jen jako dvojice – jeden bez druhého nic neříká
-            'inner_width_cm'  => 'nullable|required_with:inner_height_cm|numeric|min:1|max:100',
-            'inner_height_cm' => 'nullable|required_with:inner_width_cm|numeric|min:1|max:100',
+            'inner_width_cm'  => 'nullable|required_with:inner_height_cm|numeric|min:' . Order::MIN_INNER_CM . '|max:' . Order::MAX_INNER_CM,
+            'inner_height_cm' => 'nullable|required_with:inner_width_cm|numeric|min:' . Order::MIN_INNER_CM . '|max:' . Order::MAX_INNER_CM,
             'with_paw'     => 'boolean',
             'urn_lines'        => 'nullable|array|max:' . Order::MAX_TEXT_LINES,
             'urn_lines.*.text' => 'nullable|string|max:100',

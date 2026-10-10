@@ -115,6 +115,12 @@ class Order extends Model
     public const LID_TOP_CM = 0.8;
     public const TOP_CM = self::LID_PLUG_CM + self::LID_TOP_CM;
 
+    /** Rozsah vnitřních rozměrů (šířka i výška) v cm; z nich plyne i rozsah objemu (5³ až 25³). */
+    public const MIN_INNER_CM = 5;
+    public const MAX_INNER_CM = 25;
+    public const MIN_VOLUME_ML = self::MIN_INNER_CM ** 3;
+    public const MAX_VOLUME_ML = self::MAX_INNER_CM ** 3;
+
     public function hasInnerDimensions(): bool
     {
         return $this->inner_width_cm !== null && $this->inner_height_cm !== null;

@@ -367,4 +367,18 @@ class OrderFlowTest extends TestCase
         $this->get(route('orders.index'))->assertSee('Rex');
         $this->actingAs($this->admin)->get(route('orders.index'))->assertDontSee('Rex');
     }
+
+    public function test_dimensions_and_volume_are_limited(): void
+    {
+        $base = ['pet_name' => 'Rex', 'wood_type_id' => $this->wood->id, 'with_paw' => 0];
+        $this->actingAs($this->client);
+
+        $this->post(route('orders.store'), $base + ['volume_ml' => 1500, 'inner_width_cm' => 4.9, 'inner_height_cm' => 25.1])
+            ->assertSessionHasErrors(['inner_width_cm', 'inner_height_cm']);
+        $this->post(route('orders.store'), $base + ['volume_ml' => 124])->assertSessionHasErrors('volume_ml');
+        $this->post(route('orders.store'), $base + ['volume_ml' => 15626])->assertSessionHasErrors('volume_ml');
+
+        $this->post(route('orders.store'), $base + ['volume_ml' => 15625, 'inner_width_cm' => 25, 'inner_height_cm' => 25])
+            ->assertSessionHasNoErrors();
+    }
 }

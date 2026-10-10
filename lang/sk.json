@@ -1,5 +1,6 @@
 {
     "1 litr = 1000 ml": "1 liter = 1000 ml",
+    ":min až :max ml": ":min až :max ml",
     ":name upravil(a) zadání zakázky.": ":name upravil(a) zadanie zákazky.",
     "Aktivní": "Aktívny",
     "ano": "áno",
@@ -206,5 +207,6 @@
     "Účet :email je uložený.": "Účet :email je uložený.",
     "Účet :email je založený.": "Účet :email je založený.",
     "Účet je vypnutý.": "Účet je vypnutý.",
-    "Číslo případu": "Číslo prípadu"
+    "Číslo případu": "Číslo prípadu",
+    "Šířka i výška :min–:max cm.": "Šírka aj výška :min–:max cm."
 }
