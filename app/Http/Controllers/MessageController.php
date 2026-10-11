@@ -24,7 +24,10 @@ class MessageController extends Controller
 
         // Fotky od kremace ve vláknu jsou zpravidla doplněné podklady
         // („ostřejší fotka tlapky“) – patří mezi podklady, ne jen do zprávy.
-        $kind = $request->user()->isAdmin() ? OrderPhoto::KIND_MESSAGE : OrderPhoto::KIND_PAW;
+        // Z bloku „Fotky tlapky“ (kind=paw) jsou podklad vždy, i od dílny.
+        $kind = ! $request->user()->isAdmin() || $request->input('kind') === OrderPhoto::KIND_PAW
+            ? OrderPhoto::KIND_PAW
+            : OrderPhoto::KIND_MESSAGE;
 
         $message = DB::transaction(function () use ($order, $request, $body, $files, $kind) {
             $message = $order->messages()->create([

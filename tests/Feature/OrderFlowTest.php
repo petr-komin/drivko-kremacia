@@ -458,4 +458,17 @@ class OrderFlowTest extends TestCase
         $this->post(route('orders.paid', $order), ['paid' => 0]);
         $this->assertNull($order->fresh()->paid_at);
     }
+
+    public function test_paw_photos_can_be_added_from_paw_block_even_by_admin(): void
+    {
+        $order = $this->createOrder();
+
+        $this->get(route('orders.show', $order))->assertSee('Upravit zadání')->assertSee('Doplnit fotky tlapky');
+
+        $this->actingAs($this->admin)->post(route('messages.store', $order), [
+            'kind' => 'paw', 'photos' => [UploadedFile::fake()->image('tlapka2.jpg')],
+        ])->assertRedirect();
+
+        $this->assertSame(2, $order->pawPhotos()->count());
+    }
 }

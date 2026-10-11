@@ -23,9 +23,6 @@
         </div>
     </div>
     <div class="d-flex gap-2">
-        @if($canEdit)
-            <a href="{{ route('orders.edit', $order) }}" class="btn btn-sm btn-outline-brown"><i class="bi bi-pencil me-1"></i>{{ __('Upravit') }}</a>
-        @endif
         @if($isAdmin && $order->photos()->exists())
             <a href="{{ route('orders.zip', $order) }}" class="btn btn-sm btn-outline-brown"><i class="bi bi-file-zip me-1"></i>{{ __('Stáhnout fotky') }}</a>
         @endif
@@ -34,9 +31,18 @@
 
 <div class="row g-3">
     <div class="col-lg-5">
-        {{-- Zadání --}}
+        {{-- Zadání – úprava hned u něj, ať se změny nepíšou do zpráv --}}
         <div class="card mb-3">
             <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                    <h2 class="h6 fw-bold mb-0"><i class="bi bi-clipboard me-1"></i>{{ __('Zadání') }}</h2>
+                    @if($canEdit)
+                        <a href="{{ route('orders.edit', $order) }}" class="btn btn-sm btn-brown"><i class="bi bi-pencil me-1"></i>{{ __('Upravit zadání') }}</a>
+                    @endif
+                </div>
+                @unless($canEdit)
+                    <p class="small text-muted mb-2">{{ __('Zakázka je už ve výrobě – změnu zadání napište do zpráv.') }}</p>
+                @endunless
                 <dl class="row mb-0 small">
                     <dt class="col-5 text-muted fw-normal">{{ __('Dřevo') }}</dt><dd class="col-7 fw-semibold">
                         @if($order->woodType->photo_path)
@@ -102,6 +108,16 @@
             <div class="card-body">
                 <h2 class="h6 fw-bold"><i class="bi bi-camera me-1"></i>{{ __('Fotky tlapky') }} <span class="text-muted fw-normal">({{ $order->pawPhotos->count() }})</span></h2>
                 @include('partials.photo-grid', ['photos' => $order->pawPhotos, 'deletable' => true])
+
+                {{-- Doplnění fotek tlapky přímo sem (uloží se jako podklad a ohlásí ve zprávách) --}}
+                <form method="POST" action="{{ route('messages.store', $order) }}" enctype="multipart/form-data"
+                      data-uploading="{{ __('Nahrávám fotky…') }}" class="mt-3">
+                    @csrf
+                    <input type="hidden" name="kind" value="paw">
+                    <div class="small fw-semibold mb-1">{{ __('Doplnit fotky tlapky') }}</div>
+                    @include('partials.photo-input', ['id' => 'paw-add-photos', 'required' => true])
+                    <button type="submit" class="btn btn-sm btn-brown mt-1"><i class="bi bi-upload me-1"></i>{{ __('Nahrát fotky') }}</button>
+                </form>
             </div>
         </div>
         @endif
