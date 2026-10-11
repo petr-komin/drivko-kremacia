@@ -56,10 +56,28 @@
                     <label class="form-check-label fw-semibold" for="with_paw">{{ __('Otisk tlapky') }}</label>
                 </div>
 
+                {{-- Rozměr tlapky místo fotky s pravítkem; stačí jeden, druhý se odvodí z fotky --}}
+                <div id="paw-size" class="row g-2 mb-3 {{ $withPaw ? '' : 'd-none' }}">
+                    <div class="col-12 small text-muted">{{ __('Rozměr tlapky') }} – {{ __('stačí šířka nebo výška, druhý rozměr odvodíme z fotky. Když ho teď nemáte, doplňte ho později.') }}</div>
+                    @foreach(['paw_width_cm' => __('Šířka tlapky'), 'paw_height_cm' => __('Výška tlapky')] as $field => $label)
+                        <div class="col-6 col-sm-4">
+                            <label class="form-label" for="{{ $field }}">{{ $label }}</label>
+                            <div class="input-group">
+                                <input type="number" name="{{ $field }}" id="{{ $field }}" value="{{ old($field, $order->{$field}) }}"
+                                       class="form-control @error($field) is-invalid @enderror" min="{{ \App\Models\Order::MIN_PAW_CM }}" max="{{ \App\Models\Order::MAX_PAW_CM }}"
+                                       step="0.1" inputmode="decimal">
+                                <span class="input-group-text">cm</span>
+                                @error($field)<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
                 @unless($editing)
                     <div id="paw-section" class="mb-3 {{ $withPaw ? '' : 'd-none' }}">
                         <p class="small text-muted mb-2">{{ __('Ostrá fotka zblízka, celá tlapka v záběru, ideálně na světlém podkladu. Klidně víc fotek z různých úhlů.') }}</p>
-                        @include('partials.photo-input', ['id' => 'paw-photos', 'required' => $withPaw])
+                        <p class="small text-muted mb-2">{{ __('Fotky můžete nahrát i později v detailu zakázky.') }}</p>
+                        @include('partials.photo-input', ['id' => 'paw-photos'])
                     </div>
                 @endunless
 
@@ -259,16 +277,15 @@
 
 @push('scripts')
 <script>
-    // Fotky jen u urny s tlapkou; rozložení jen když je tlapka i text
+    // Fotky a rozměr tlapky jen u urny s tlapkou; rozložení jen když je tlapka i text
     (() => {
         const paw = document.getElementById('with_paw'), linesBox = document.getElementById('urn-lines');
         const hasText = () => [...linesBox.querySelectorAll('input[type=text]')].some(i => i.value.trim());
         const pawSection = document.getElementById('paw-section'), layout = document.getElementById('layout-section');
-        const photoInput = document.getElementById('paw-photos');
 
         const toggle = () => {
             pawSection?.classList.toggle('d-none', !paw.checked);
-            if (photoInput) photoInput.dataset.required = paw.checked ? '1' : '0';
+            document.getElementById('paw-size').classList.toggle('d-none', !paw.checked);
             layout.classList.toggle('d-none', !(paw.checked && hasText()));
         };
 

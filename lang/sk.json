@@ -120,7 +120,6 @@
     "Přihlásit": "Prihlásiť",
     "Přihlášení": "Prihlásenie",
     "Přihlášení funguje přístupovým odkazem (bez hesla), heslem, nebo obojím.": "Prihlásenie funguje prístupovým odkazom (bez hesla), heslom, alebo oboma.",
-    "Přiložte alespoň jednu fotku tlapky (nebo zrušte otisk tlapky).": "Priložte aspoň jednu fotku labky (alebo zrušte odtlačok labky).",
     "Přiložte alespoň jednu fotku.": "Priložte aspoň jednu fotku.",
     "případ": "prípad",
     "Případ": "Prípad",
@@ -227,5 +226,15 @@
     "Účet :email je založený.": "Účet :email je založený.",
     "Účet je vypnutý.": "Účet je vypnutý.",
     "Číslo případu": "Číslo prípadu",
-    "Šířka i výška :min–:max cm.": "Šírka aj výška :min–:max cm."
+    "Šířka i výška :min–:max cm.": "Šírka aj výška :min–:max cm.",
+    "Šířka tlapky": "Šírka labky",
+    "Výška tlapky": "Výška labky",
+    "Rozměr tlapky": "Rozmer labky",
+    "stačí šířka nebo výška, druhý rozměr odvodíme z fotky. Když ho teď nemáte, doplňte ho později.": "stačí šírka alebo výška, druhý rozmer odvodíme z fotky. Ak ho teraz nemáte, doplňte ho neskôr.",
+    "Chybí rozměr tlapky – tlapka je jen vyfocená. Doplňte šířku nebo výšku.": "Chýba rozmer labky – labka je len odfotená. Doplňte šírku alebo výšku.",
+    "chybí rozměr tlapky": "chýba rozmer labky",
+    "Doplnit": "Doplniť",
+    "Chybí fotka tlapky – nahrajte ji níže.": "Chýba fotka labky – nahrajte ju nižšie.",
+    "chybí fotka tlapky": "chýba fotka labky",
+    "Fotky můžete nahrát i později v detailu zakázky.": "Fotky môžete nahrať aj neskôr v detaile zákazky."
 }

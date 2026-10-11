@@ -46,6 +46,12 @@
                     <div class="d-flex flex-wrap gap-2 align-items-center">
                         <strong>{{ $order->pet_name }}</strong>
                         @include('partials.status-badge')
+                        @if($order->missingPawPhoto())
+                            <span class="badge text-bg-warning"><i class="bi bi-exclamation-triangle me-1"></i>{{ __('chybí fotka tlapky') }}</span>
+                        @endif
+                        @if($order->missingPawSize())
+                            <span class="badge text-bg-warning"><i class="bi bi-exclamation-triangle me-1"></i>{{ __('chybí rozměr tlapky') }}</span>
+                        @endif
                         @if($order->isPaid())
                             <span class="badge text-bg-light border text-success"><i class="bi bi-cash-coin me-1"></i>{{ __('zaplaceno') }}</span>
                         @endif

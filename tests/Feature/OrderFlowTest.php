@@ -42,6 +42,7 @@ class OrderFlowTest extends TestCase
             'wood_type_id' => $this->wood->id,
             'volume_ml'    => 1500,
             'note'         => 'Levá přední',
+            'paw_width_cm' => 6.5,
             'photos'       => [UploadedFile::fake()->image('tlapka.jpg', 2400, 1800)],
         ])->assertRedirect();
 
@@ -80,15 +81,24 @@ class OrderFlowTest extends TestCase
         $this->get(route('orders.index'))->assertOk()->assertSee('Rex');
     }
 
-    public function test_order_requires_photo(): void
+    public function test_paw_photo_can_be_added_later_and_missing_one_is_flagged(): void
     {
         $this->actingAs($this->client)->post(route('orders.store'), [
             'pet_name'     => 'Rex',
             'wood_type_id' => $this->wood->id,
             'volume_ml'    => 1500,
-        ])->assertSessionHasErrors('photos');
+            'paw_width_cm' => 6,
+        ])->assertSessionHasNoErrors();
 
-        $this->assertSame(0, Order::count());
+        $order = Order::firstOrFail();
+        $this->assertTrue($order->with_paw);
+        $this->assertTrue($order->missingPawPhoto());
+        $this->get(route('orders.show', $order))->assertSee('Chybí fotka tlapky');
+        $this->get(route('orders.index'))->assertSee('chybí fotka tlapky');
+
+        Photos::store($order, [UploadedFile::fake()->image('tlapka.jpg')], \App\Models\OrderPhoto::KIND_PAW);
+        $this->assertFalse($order->fresh()->missingPawPhoto());
+        $this->get(route('orders.show', $order))->assertDontSee('Chybí fotka tlapky');
     }
 
     public function test_inactive_wood_cannot_be_chosen(): void
@@ -290,8 +300,7 @@ class OrderFlowTest extends TestCase
     {
         $base = ['pet_name' => 'Bobík', 'wood_type_id' => $this->wood->id, 'volume_ml' => 800];
 
-        // S tlapkou bez fotky neprojde
-        $this->actingAs($this->client)->post(route('orders.store'), $base)->assertSessionHasErrors('photos');
+        $this->actingAs($this->client);
 
         // Bez tlapky, jen text – fotka ani rozložení nejsou potřeba
         $this->post(route('orders.store'), $base + ['with_paw' => 0, 'layout' => 'paw_left', 'urn_lines' => [
@@ -309,7 +318,7 @@ class OrderFlowTest extends TestCase
         // Tlapka + text → rozložení se uloží (bez volby výchozí)
         $this->post(route('orders.store'), $base + [
             'with_paw' => 1, 'urn_lines' => [['text' => 'Bobík', 'size' => 'L']], 'layout' => 'text_left',
-            'photos'   => [UploadedFile::fake()->image('a.jpg')],
+            'paw_height_cm' => 5, 'photos' => [UploadedFile::fake()->image('a.jpg')],
         ])->assertSessionHasNoErrors();
         $order = Order::latest('id')->first();
         $this->assertSame('text_left', $order->layout);
@@ -406,6 +415,39 @@ class OrderFlowTest extends TestCase
             'pet_name' => 'Rex', 'wood_type_id' => $this->wood->id, 'volume_ml' => 1000, 'with_paw' => 1,
         ])->assertSessionHasNoErrors();
         $this->assertSame('45.00', $order->fresh()->price_eur);
+    }
+
+    public function test_paw_size_is_optional_but_missing_one_is_flagged(): void
+    {
+        $base = ['pet_name' => 'Rex', 'wood_type_id' => $this->wood->id, 'volume_ml' => 800, 'with_paw' => 1,
+            'photos' => [UploadedFile::fake()->image('a.jpg')]];
+        $warning = 'Chybí rozměr tlapky';
+
+        // Bez rozměru se zakázka uloží, ale svítí upozornění
+        $this->actingAs($this->client)->post(route('orders.store'), $base)->assertSessionHasNoErrors();
+        $order = Order::latest('id')->first();
+        $this->assertTrue($order->missingPawSize());
+        $this->get(route('orders.show', $order))->assertSee($warning);
+        $this->get(route('orders.index'))->assertSee('chybí rozměr tlapky');
+
+        // Stačí jeden rozměr, druhý se odvodí z fotky
+        $this->put(route('orders.update', $order), ['pet_name' => 'Rex', 'wood_type_id' => $this->wood->id,
+            'volume_ml' => 800, 'with_paw' => 1, 'paw_width_cm' => 5.5])->assertSessionHasNoErrors();
+        $order->refresh();
+        $this->assertFalse($order->missingPawSize());
+        $this->assertSame('š 5,5 cm', $order->pawSizeLabel());
+        $this->get(route('orders.show', $order))->assertSee('š 5,5 cm')->assertDontSee($warning);
+
+        $this->post(route('orders.store'), $base + ['paw_width_cm' => 0.5])->assertSessionHasErrors('paw_width_cm');
+
+        // Starší zakázka (rozměr na fotce s pravítkem) upozornění nemá
+        $order->forceFill(['paw_width_cm' => null, 'paw_size_in_photo' => true])->save();
+        $this->assertFalse($order->missingPawSize());
+
+        // Bez tlapky se rozměr tlapky neuloží
+        $this->post(route('orders.store'), ['with_paw' => 0, 'paw_width_cm' => 5, 'paw_height_cm' => 6] + $base)
+            ->assertSessionHasNoErrors();
+        $this->assertNull(Order::latest('id')->first()->paw_width_cm);
     }
 
     public function test_order_without_wood_price_has_no_price(): void

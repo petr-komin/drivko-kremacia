@@ -59,6 +59,9 @@
                             <div class="small text-muted fw-normal">{{ __('vnější cca') }} {{ $order->dimensionsLabel(outer: true) }}</div></dd>
                     @endif
                     <dt class="col-5 text-muted fw-normal">{{ __('Otisk tlapky') }}</dt><dd class="col-7 fw-semibold">{{ $order->with_paw ? __('ano') : __('ne') }}</dd>
+                    @if($order->with_paw && $order->pawSizeLabel())
+                        <dt class="col-5 text-muted fw-normal">{{ __('Rozměr tlapky') }}</dt><dd class="col-7 fw-semibold">{{ $order->pawSizeLabel() }}</dd>
+                    @endif
                     @if($order->hasUrnText())
                         <dt class="col-5 text-muted fw-normal">{{ __('Text na urnu') }}</dt>
                         <dd class="col-7 fw-semibold">
@@ -107,6 +110,18 @@
         <div class="card mb-3">
             <div class="card-body">
                 <h2 class="h6 fw-bold"><i class="bi bi-camera me-1"></i>{{ __('Fotky tlapky') }} <span class="text-muted fw-normal">({{ $order->pawPhotos->count() }})</span></h2>
+                @if($order->missingPawPhoto())
+                    <div class="alert alert-warning py-2 small"><i class="bi bi-exclamation-triangle-fill me-1"></i>{{ __('Chybí fotka tlapky – nahrajte ji níže.') }}</div>
+                @endif
+                @if($order->missingPawSize())
+                    <div class="alert alert-warning py-2 small d-flex align-items-center gap-2">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <span class="flex-grow-1">{{ __('Chybí rozměr tlapky – tlapka je jen vyfocená. Doplňte šířku nebo výšku.') }}</span>
+                        @if(auth()->user()->isAdmin() || $order->status === \App\Models\Order::STATUS_NEW)
+                            <a href="{{ route('orders.edit', $order) }}#paw-size" class="btn btn-sm btn-warning">{{ __('Doplnit') }}</a>
+                        @endif
+                    </div>
+                @endif
                 @include('partials.photo-grid', ['photos' => $order->pawPhotos, 'deletable' => true])
 
                 {{-- Doplnění fotek tlapky přímo sem (uloží se jako podklad a ohlásí ve zprávách) --}}

@@ -68,10 +68,8 @@ class OrderController extends Controller
 
     public function store(Request $request)
     {
-        // Fotka tlapky je povinná jen u urny s otiskem
-        $data = $this->normalize($request, $request->validate($this->rules() + Photos::rules(required: $request->boolean('with_paw', true)), [
-            'photos.required' => __('Přiložte alespoň jednu fotku tlapky (nebo zrušte otisk tlapky).'),
-        ]));
+        // Rozhoduje volba „otisk tlapky“; fotky i rozměr tlapky jdou doplnit později (detail i seznam na ně upozorní)
+        $data = $this->normalize($request, $request->validate($this->rules() + Photos::rules()));
 
         $order = DB::transaction(function () use ($data, $request) {
             $order = Order::create([
@@ -82,6 +80,8 @@ class OrderController extends Controller
                 'inner_width_cm'   => $data['inner_width_cm'] ?? null,
                 'inner_height_cm'  => $data['inner_height_cm'] ?? null,
                 'with_paw'         => $data['with_paw'],
+                'paw_width_cm'     => $data['paw_width_cm'],
+                'paw_height_cm'    => $data['paw_height_cm'],
                 'urn_lines'        => $data['urn_lines'],
                 'layout'           => $data['layout'],
                 'note'             => $data['note'] ?? null,
@@ -172,6 +172,9 @@ class OrderController extends Controller
             'inner_width_cm'  => 'nullable|required_with:inner_height_cm|numeric|min:' . Order::MIN_INNER_CM . '|max:' . Order::MAX_INNER_CM,
             'inner_height_cm' => 'nullable|required_with:inner_width_cm|numeric|min:' . Order::MIN_INNER_CM . '|max:' . Order::MAX_INNER_CM,
             'with_paw'     => 'boolean',
+            // Rozměr tlapky (místo fotky s pravítkem); stačí jeden, druhý se odvodí z fotky
+            'paw_width_cm'  => ['nullable', 'numeric', 'min:' . Order::MIN_PAW_CM, 'max:' . Order::MAX_PAW_CM],
+            'paw_height_cm' => ['nullable', 'numeric', 'min:' . Order::MIN_PAW_CM, 'max:' . Order::MAX_PAW_CM],
             'urn_lines'        => 'nullable|array|max:' . Order::MAX_TEXT_LINES,
             'urn_lines.*.text' => 'nullable|string|max:100',
             'urn_lines.*.size' => ['nullable', Rule::in(array_keys(Order::TEXT_SIZES))],
@@ -191,6 +194,10 @@ class OrderController extends Controller
         }
 
         $data['with_paw'] = (bool) ($data['with_paw'] ?? true);
+        // Bez tlapky rozměr tlapky nemá smysl
+        foreach (['paw_width_cm', 'paw_height_cm'] as $field) {
+            $data[$field] = $data['with_paw'] ? ($data[$field] ?? null) : null;
+        }
         // Prázdné řádky pryč; bez velikosti = střední
         $lines = collect($data['urn_lines'] ?? [])
             ->map(fn ($l) => ['text' => trim($l['text'] ?? ''), 'size' => $l['size'] ?? 'M'])

@@ -31,18 +31,21 @@ class Order extends Model
 
     protected $fillable = [
         'case_number', 'pet_name', 'wood_type_id', 'volume_ml', 'inner_width_cm', 'inner_height_cm',
-        'with_paw', 'urn_lines', 'layout', 'price_eur', 'note', 'notify',
+        'with_paw', 'paw_width_cm', 'paw_height_cm', 'urn_lines', 'layout', 'price_eur', 'note', 'notify',
         'status', 'created_by', 'last_activity_at',
     ];
 
     protected $casts = [
         'volume_ml'        => 'integer',
         'with_paw'         => 'boolean',
+        'paw_size_in_photo' => 'boolean',
         'notify'           => 'boolean',
         'price_eur'        => 'decimal:2',
         'urn_lines'        => 'array',
         'inner_width_cm'   => 'decimal:1',
         'inner_height_cm'  => 'decimal:1',
+        'paw_width_cm'     => 'decimal:1',
+        'paw_height_cm'    => 'decimal:1',
         'started_at'       => 'datetime',
         'finished_at'      => 'datetime',
         'handed_over_at'   => 'datetime',
@@ -111,6 +114,8 @@ class Order extends Model
         'inner_width_cm'  => 'Vnitřní šířka',
         'inner_height_cm' => 'Vnitřní výška',
         'with_paw'        => 'Otisk tlapky',
+        'paw_width_cm'    => 'Šířka tlapky',
+        'paw_height_cm'   => 'Výška tlapky',
         'urn_lines'       => 'Text na urnu',
         'layout'          => 'Rozložení',
         'price_eur'       => 'Cena',
@@ -129,7 +134,8 @@ class Order extends Model
         return match ($field) {
             'wood_type_id'                      => WoodType::find($value)?->label ?? '–',
             'volume_ml'                         => $value . ' ml',
-            'inner_width_cm', 'inner_height_cm' => rtrim(rtrim(number_format((float) $value, 1, ',', ''), '0'), ',') . ' cm',
+            'inner_width_cm', 'inner_height_cm',
+            'paw_width_cm', 'paw_height_cm'     => rtrim(rtrim(number_format((float) $value, 1, ',', ''), '0'), ',') . ' cm',
             'with_paw', 'notify'                => $value ? __('ano') : __('ne'),
             'urn_lines'                         => self::linesLabel((array) $value),
             'layout'                            => isset(self::LAYOUTS[$value]) ? __(self::LAYOUTS[$value]) : (string) $value,
@@ -193,6 +199,39 @@ class Order extends Model
     public const MAX_INNER_CM = 25;
     public const MIN_VOLUME_ML = self::MIN_INNER_CM ** 3;
     public const MAX_VOLUME_ML = self::MAX_INNER_CM ** 3;
+
+    /** Rozsah rozměrů tlapky (šířka i výška) v cm. */
+    public const MIN_PAW_CM = 1;
+    public const MAX_PAW_CM = 30;
+
+    /** „š 5,5 × v 6 cm“; stačí jeden rozměr (druhý se odvodí z fotky), pak „š 5,5 cm“. */
+    public function pawSizeLabel(): ?string
+    {
+        $f = fn ($n) => rtrim(rtrim(number_format((float) $n, 1, ',', ''), '0'), ',');
+        $parts = array_filter([
+            $this->paw_width_cm !== null ? 'š ' . $f($this->paw_width_cm) : null,
+            $this->paw_height_cm !== null ? 'v ' . $f($this->paw_height_cm) : null,
+        ]);
+
+        return $parts ? implode(' × ', $parts) . ' cm' : null;
+    }
+
+    /** Urna má mít tlapku, ale fotka ještě nepřišla – upozornit, dokud se zakázka nedokončí. */
+    public function missingPawPhoto(): bool
+    {
+        return $this->with_paw && $this->isOpen() && $this->pawPhotos->isEmpty();
+    }
+
+    /**
+     * Tlapka nemá zadaný rozměr – upozornit, dokud se zakázka nedokončí.
+     * Starší zakázky měly rozměr na fotce (pravítko) – u nich ne.
+     */
+    public function missingPawSize(): bool
+    {
+        return $this->with_paw && ! $this->paw_size_in_photo
+            && $this->isOpen()
+            && $this->paw_width_cm === null && $this->paw_height_cm === null;
+    }
 
     public function hasInnerDimensions(): bool
     {

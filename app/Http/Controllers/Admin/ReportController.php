@@ -50,7 +50,7 @@ class ReportController extends Controller
             $out = fopen('php://output', 'w');
             // BOM – Excel jinak otevře češtinu / slovenštinu rozsypanou
             fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, array_map(fn ($h) => __($h), ['Zakázka', 'Číslo případu', 'Název', 'Dřevo', 'Objem (ml)', 'Cena (€)', 'Vnitřní rozměry', 'Vnější rozměry', 'Tlapka', 'Text na urnu', 'Rozložení', 'Zadáno', 'Dokončeno', 'Předáno', 'Zaplaceno']), ';');
+            fputcsv($out, array_map(fn ($h) => __($h), ['Zakázka', 'Číslo případu', 'Název', 'Dřevo', 'Objem (ml)', 'Cena (€)', 'Vnitřní rozměry', 'Vnější rozměry', 'Tlapka', 'Rozměr tlapky', 'Text na urnu', 'Rozložení', 'Zadáno', 'Dokončeno', 'Předáno', 'Zaplaceno']), ';');
 
             foreach ($orders as $o) {
                 fputcsv($out, [
@@ -63,6 +63,7 @@ class ReportController extends Controller
                     $o->dimensionsLabel(),
                     $o->dimensionsLabel(outer: true),
                     $o->with_paw ? __('ano') : __('ne'),
+                    $o->with_paw ? $o->pawSizeLabel() : null,
                     $o->urnTextWithSizes(),
                     $o->layout_label,
                     $o->created_at->format('j. n. Y'),

@@ -8,7 +8,7 @@
 
     <p style="margin:0 0 16px; font-size:14px;">
         {{ $order->woodType->label }} · {{ $order->volume_label }}@if($order->price_eur !== null) · {{ \App\Models\Order::formatEur($order->price_eur) }}@endif @if($order->hasInnerDimensions()) · {{ __('vnitřní') }} {{ $order->dimensionsLabel() }}@endif<br>
-        {{ $order->with_paw ? __('S otiskem tlapky') : __('Bez tlapky') }}@if($order->layout_label) · {{ $order->layout_label }}@endif<br>
+        {{ $order->with_paw ? __('S otiskem tlapky') : __('Bez tlapky') }}{{ $order->with_paw && $order->pawSizeLabel() ? ' (' . $order->pawSizeLabel() . ')' : '' }}@if($order->layout_label) · {{ $order->layout_label }}@endif<br>
         @if($order->hasUrnText())
             {{ __('Text na urnu') }}:<br>
             @foreach($order->urn_lines as $line)
