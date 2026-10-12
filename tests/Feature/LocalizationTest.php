@@ -6,6 +6,7 @@ use App\Mail\OrderUpdateMail;
 use App\Models\Order;
 use App\Models\User;
 use App\Models\WoodType;
+use App\Support\Notifier;
 use App\Support\Photos;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
@@ -53,12 +54,14 @@ class LocalizationTest extends TestCase
 
         $this->actingAs($this->admin)->post(route('orders.status', $order), ['status' => Order::STATUS_IN_PRODUCTION]);
 
-        Mail::assertSent(OrderUpdateMail::class, function (OrderUpdateMail $mail) {
-            $mail->assertHasSubject('U-0001 Rex: stav: Vo výrobe');
-            $mail->assertSeeInHtml('Jelša');
+        if (Notifier::CLIENT_EMAILS) {
+            Mail::assertSent(OrderUpdateMail::class, function (OrderUpdateMail $mail) {
+                $mail->assertHasSubject('U-0001 Rex: stav: Vo výrobe');
+                $mail->assertSeeInHtml('Jelša');
 
-            return $mail->hasTo($this->client->email);
-        });
+                return $mail->hasTo($this->client->email);
+            });
+        }
 
         // Systémová zpráva ve vlákně: dílna česky, kremace slovensky
         $this->get(route('orders.show', $order))->assertSee('Stav změněn na „Ve výrobě“.', false);

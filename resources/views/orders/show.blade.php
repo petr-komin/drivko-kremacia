@@ -13,7 +13,7 @@
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-2 mb-3">
     <div>
         <h1 class="h4 fw-bold mb-1">{{ $order->pet_name }} @include('partials.status-badge')
-            @if($isAdmin && ! $order->notify)
+            @if(\App\Support\Notifier::CLIENT_EMAILS && $isAdmin && ! $order->notify)
                 <span class="badge text-bg-light border" title="{{ __('K této zakázce se neposílají e-maily.') }}"><i class="bi bi-bell-slash me-1"></i>{{ __('bez e-mailů') }}</span>
             @endif
         </h1>
@@ -53,10 +53,22 @@
                     <dt class="col-5 text-muted fw-normal">{{ __('Objem') }}</dt><dd class="col-7 fw-semibold">{{ $order->volume_label }}</dd>
                     <dt class="col-5 text-muted fw-normal">{{ __('Cena') }}</dt><dd class="col-7 fw-semibold">{{ \App\Models\Order::formatEur($order->price_eur) }}
                         @if($order->price_eur !== null && $order->hasEngraving())<span class="small text-muted fw-normal">({{ __('vč. gravírování') }})</span>@endif</dd>
+                    @if(auth()->user()->isAdmin())
+                        <dt class="col-5 text-muted fw-normal">{{ __('Tloušťka stěny') }}</dt><dd class="col-7 fw-semibold">{{ $order->wall_mm }} mm</dd>
+                    @endif
                     @if($order->hasInnerDimensions())
                         <dt class="col-5 text-muted fw-normal">{{ __('Vnitřní rozměry') }}</dt>
                         <dd class="col-7 fw-semibold">{{ $order->dimensionsLabel() }}
-                            <div class="small text-muted fw-normal">{{ __('vnější cca') }} {{ $order->dimensionsLabel(outer: true) }}</div></dd>
+                            <div class="small text-muted fw-normal">{{ __('vnější cca') }} {{ $order->dimensionsLabel(outer: true) }}</div>
+                            @if($isAdmin)
+                                <div class="fw-normal">@include('partials.cut-list')</div>
+                                @push('scripts')
+                                <script>
+                                    window.cutListDims = () => ({{ Js::from(['iw' => (float) $order->inner_width_cm * 10, 'ih' => (float) $order->inner_height_cm * 10, 'wall' => $order->wall_mm]) }});
+                                </script>
+                                @endpush
+                            @endif
+                        </dd>
                     @endif
                     <dt class="col-5 text-muted fw-normal">{{ __('Otisk tlapky') }}</dt><dd class="col-7 fw-semibold">{{ $order->with_paw ? __('ano') : __('ne') }}</dd>
                     @if($order->with_paw && $order->pawSizeLabel())
@@ -91,7 +103,7 @@
                     <hr>
                     @include('partials.urn-3d', [
                         'state' => [
-                            'innerW' => $iw * 10, 'innerH' => $ih * 10,
+                            'innerW' => $iw * 10, 'innerH' => $ih * 10, 'wall' => $order->wall_mm,
                             'woodName' => $order->woodType->name, 'woodPhoto' => $order->woodType->photoUrl('large'),
                             'withPaw' => $order->with_paw, 'lines' => $order->urn_lines ?? [], 'layout' => $order->layout,
                         ],
@@ -152,6 +164,8 @@
             <div class="card mb-3 border-start border-4" style="border-color: var(--brown) !important;">
                 <div class="card-body">
                     <h2 class="h6 fw-bold"><i class="bi bi-hammer me-1"></i>{{ __('Dílna') }}</h2>
+                    {{-- Přepínač e-mailů – teď vypnutý, viz Notifier::CLIENT_EMAILS --}}
+                    @if(\App\Support\Notifier::CLIENT_EMAILS)
                     <form method="POST" action="{{ route('orders.notify', $order) }}" class="form-check form-switch mb-3">
                         @csrf
                         <input type="hidden" name="notify" value="0">
@@ -159,6 +173,7 @@
                                @checked($order->notify) onchange="this.form.submit()">
                         <label class="form-check-label small" for="notify-switch">{{ __('Posílat e-maily k této zakázce') }}</label>
                     </form>
+                    @endif
 
                     {{-- Zaplaceno: nezávislé na stavu; zaškrtnutí zapíše teď, datum jde opravit --}}
                     <form method="POST" action="{{ route('orders.paid', $order) }}" class="mb-3">

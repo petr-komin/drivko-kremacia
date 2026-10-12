@@ -1,7 +1,7 @@
 # Drivko – urny (kremacia.drivko.shop)
 
 Interní aplikace pro objednávání uren s otiskem tlapky pro jednu kremaci.
-Nahrazuje domluvu přes WhatsApp: zakázka = tlapka (fotky jdou doplnit později, chybějící hlásí `Order::missingPawPhoto`) + dřevo + objem urny (ml), volitelně vnitřní rozměry (čtverec; vnější = +2×8 mm, výška +8+15+8 mm); 3D náhled urny `public/js/urn-viewer.js` (tlapka a text se vypalují vždy na přední stěnu, ne na víko) (Three.js z CDN přes importmap, bez buildu); otisk tlapky je volitelný (`with_paw`); u tlapky rozměr `paw_width_cm` / `paw_height_cm` (nahrazuje fotku s pravítkem; nepovinný, stačí jeden – druhý se odvodí z fotky; chybí-li, detail i seznam upozorní `Order::missingPawSize`, kromě starších zakázek s `paw_size_in_photo`), k tomu text na urnu po řádcích s velikostí písma (`urn_lines`, `Order::TEXT_SIZES`) a rozložení (`Order::LAYOUTS`, jen když je tlapka i text),
+Nahrazuje domluvu přes WhatsApp: zakázka = tlapka (fotky jdou doplnit později, chybějící hlásí `Order::missingPawPhoto`) + dřevo + objem urny (ml), volitelně vnitřní rozměry (čtverec; vnější = +2× stěna, výška + stěna + 15 + stěna; tloušťku stěny `wall_mm` 8–12 mm zadává jen dílna, výchozí 8; dílna u rozměrů vidí „Přířez desek“ – `partials/cut-list`, prstové spoje: 4 stejné stěny a dno na vnější rozměr + 0,5 mm z každé strany na obroušení); 3D náhled urny `public/js/urn-viewer.js` (tlapka a text se vypalují vždy na přední stěnu, ne na víko) (Three.js z CDN přes importmap, bez buildu); otisk tlapky je volitelný (`with_paw`); u tlapky rozměr `paw_width_cm` / `paw_height_cm` (nahrazuje fotku s pravítkem; nepovinný, stačí jeden – druhý se odvodí z fotky; chybí-li, detail i seznam upozorní `Order::missingPawSize`, kromě starších zakázek s `paw_size_in_photo`), k tomu text na urnu po řádcích s velikostí písma (`urn_lines`, `Order::TEXT_SIZES`) a rozložení (`Order::LAYOUTS`, jen když je tlapka i text),
 k ní vlákno zpráv, stav výroby a fotky hotového kusu (evidence dokončené práce).
 Slouží i jako podklad pro budoucí informační systém kremace – proto se u zakázky
 drží jejich číslo případu (`orders.case_number`).
@@ -60,5 +60,5 @@ Dílna mluví česky, kremace slovensky – každý si jazyk přepne v profilu (
   přihlášeným. Originál se nemění, náhledy (WebP) dělá `App\Support\Photos`.
 - Stav „Hotovo“ vyžaduje fotku hotového kusu. Časy stavů (`started_at`, `finished_at`,
   `handed_over_at`) jsou zdroj měsíčního přehledu – návrat do dřívějšího stavu je maže (`Order::moveTo`).
-- E-maily: `App\Support\Notifier`, chyba odeslání se jen zaloguje.
+- E-maily: `App\Support\Notifier`, chyba odeslání se jen zaloguje. **Teď jen dílně** (`Notifier::CLIENT_EMAILS = false` – kremaci nic, přepínač `orders.notify` schovaný, dílna dostává ke všem zakázkám); `true` vrátí původní chování.
 - Testy běží na SQLite v paměti – v dotazech nepoužívat syntaxi jen pro PostgreSQL (např. `ilike`, použij `whereLike`).

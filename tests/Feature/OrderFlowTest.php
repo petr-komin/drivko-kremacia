@@ -7,6 +7,7 @@ use App\Models\OrderPhoto;
 use App\Models\User;
 use App\Models\WoodType;
 use App\Mail\OrderUpdateMail;
+use App\Support\Notifier;
 use App\Support\Photos;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -172,7 +173,9 @@ class OrderFlowTest extends TestCase
         $this->assertNotNull($order->finished_at);
         $this->assertSame(1, $order->finishedPhotos()->count());
 
-        Mail::assertSent(OrderUpdateMail::class, fn ($m) => $m->hasTo($this->client->email) && $m->text === 'Hotovo, můžete si vyzvednout.');
+        if (Notifier::CLIENT_EMAILS) {
+            Mail::assertSent(OrderUpdateMail::class, fn ($m) => $m->hasTo($this->client->email) && $m->text === 'Hotovo, můžete si vyzvednout.');
+        }
 
         $this->get(route('report.index'))->assertOk()->assertSee('Rex');
         $csv = $this->get(route('report.csv'))->assertOk()->streamedContent();
@@ -328,8 +331,34 @@ class OrderFlowTest extends TestCase
         $this->post(route('orders.store'), $base + ['with_paw' => 0, 'layout' => 'nesmysl'])->assertSessionHasErrors('layout');
     }
 
+    public function test_only_workshop_gets_emails_while_client_emails_are_off(): void
+    {
+        if (Notifier::CLIENT_EMAILS) {
+            $this->markTestSkipped('E-maily kremaci jsou zapnuté.');
+        }
+
+        $order = $this->createOrder();
+        // I u zakázky s vypnutými upozorněními (dřív přepínač) dostane dílna e-mail
+        $order->forceFill(['notify' => false])->save();
+        $this->get(route('orders.create'))->assertDontSee('Posílat e-maily k této zakázce');
+
+        $this->actingAs($this->admin);
+        $this->get(route('orders.show', $order))->assertDontSee('Posílat e-maily k této zakázce')->assertDontSee('bez e-mailů');
+        $this->post(route('orders.status', $order), ['status' => Order::STATUS_IN_PRODUCTION, 'body' => 'Začínáme']);
+        $this->post(route('messages.store', $order), ['body' => 'Dotaz']);
+
+        $this->actingAs($this->client)->post(route('messages.store', $order), ['body' => 'Odpověď']);
+
+        Mail::assertNotSent(OrderUpdateMail::class, fn ($m) => $m->hasTo($this->client->email));
+        Mail::assertSent(OrderUpdateMail::class, fn ($m) => $m->hasTo($this->admin->email) && $m->text === 'Odpověď');
+    }
+
     public function test_admin_can_record_order_without_emails(): void
     {
+        if (! Notifier::CLIENT_EMAILS) {
+            $this->markTestSkipped('E-maily kremaci jsou vypnuté (Notifier::CLIENT_EMAILS).');
+        }
+
         $this->actingAs($this->admin)->post(route('orders.store'), [
             'pet_name' => 'Stará zakázka', 'wood_type_id' => $this->wood->id, 'volume_ml' => 800,
             'with_paw' => 0, 'notify' => 0,
@@ -347,6 +376,10 @@ class OrderFlowTest extends TestCase
 
     public function test_client_cannot_turn_off_emails(): void
     {
+        if (! Notifier::CLIENT_EMAILS) {
+            $this->markTestSkipped('E-maily kremaci jsou vypnuté (Notifier::CLIENT_EMAILS).');
+        }
+
         $this->actingAs($this->client)->post(route('orders.store'), [
             'pet_name' => 'Rex', 'wood_type_id' => $this->wood->id, 'volume_ml' => 800,
             'with_paw' => 0, 'notify' => 0,
@@ -359,6 +392,10 @@ class OrderFlowTest extends TestCase
 
     public function test_admin_toggles_emails_on_order_detail(): void
     {
+        if (! Notifier::CLIENT_EMAILS) {
+            $this->markTestSkipped('E-maily kremaci jsou vypnuté (Notifier::CLIENT_EMAILS).');
+        }
+
         $order = $this->createOrder();
 
         $this->post(route('orders.notify', $order), ['notify' => 0])->assertForbidden();
@@ -448,6 +485,39 @@ class OrderFlowTest extends TestCase
         $this->post(route('orders.store'), ['with_paw' => 0, 'paw_width_cm' => 5, 'paw_height_cm' => 6] + $base)
             ->assertSessionHasNoErrors();
         $this->assertNull(Order::latest('id')->first()->paw_width_cm);
+    }
+
+    public function test_wall_thickness_defaults_to_8mm_and_only_workshop_sets_it(): void
+    {
+        $base = ['pet_name' => 'Rex', 'wood_type_id' => $this->wood->id, 'volume_ml' => 1500, 'with_paw' => 0,
+            'inner_width_cm' => 10, 'inner_height_cm' => 15];
+
+        // Kremace tloušťku nezadává – zůstane výchozích 8 mm, ani podstrčená hodnota se neuloží
+        $this->actingAs($this->client)->post(route('orders.store'), $base + ['wall_mm' => 12])->assertSessionHasNoErrors();
+        $order = Order::latest('id')->first();
+        $this->assertSame(8, $order->wall_mm);
+        $this->assertSame('11,6 × 11,6 × 18,1 cm', $order->dimensionsLabel(outer: true));
+        $this->get(route('orders.show', $order))->assertDontSee('Tloušťka stěny');
+
+        // Dílna: 8–12 mm, vnější rozměry podle ní
+        $this->actingAs($this->admin)->put(route('orders.update', $order), $base + ['wall_mm' => 13])->assertSessionHasErrors('wall_mm');
+        $this->put(route('orders.update', $order), $base + ['wall_mm' => 7])->assertSessionHasErrors('wall_mm');
+        $this->put(route('orders.update', $order), $base + ['wall_mm' => 12])->assertSessionHasNoErrors();
+        $order->refresh();
+        $this->assertSame(12, $order->wall_mm);
+        $this->assertSame('12,4 × 12,4 × 18,9 cm', $order->dimensionsLabel(outer: true));
+        $this->get(route('orders.show', $order))->assertSee('Tloušťka stěny')->assertSee('12 mm');
+
+        // Přířez desek jen pro dílnu, s rozměry zakázky v mm
+        $this->get(route('orders.show', $order))->assertSee('Přířez desek')
+            ->assertSee('window.cutListDims = () => (' . \Illuminate\Support\Js::from(['iw' => 100.0, 'ih' => 150.0, 'wall' => 12]), false);
+        $this->get(route('orders.edit', $order))->assertSee('Přířez desek');
+        $this->actingAs($this->client)->get(route('orders.show', $order))->assertDontSee('Přířez desek');
+        $this->get(route('orders.create'))->assertDontSee('Přířez desek');
+
+        // Úprava kremací tloušťku nezmění
+        $this->actingAs($this->client)->put(route('orders.update', $order), $base + ['wall_mm' => 8])->assertSessionHasNoErrors();
+        $this->assertSame(12, $order->fresh()->wall_mm);
     }
 
     public function test_order_without_wood_price_has_no_price(): void

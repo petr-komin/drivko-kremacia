@@ -13,7 +13,8 @@ const BURN = '#3a1e08';
 export class UrnViewer {
     /**
      * @param {HTMLCanvasElement} canvas
-     * @param {{wall:number, lidPlug:number, lidTop:number, textRatios:Object}} sizes  v mm; textRatios = velikost řádku → poměr písma
+     * @param {{wall:number, lidPlug:number, textRatios:Object}} sizes  v mm (wall = výchozí tloušťka desky, zakázka ji přepíše
+     *        ve stavu `wall`); textRatios = velikost řádku → poměr písma
      */
     constructor(canvas, sizes) {
         this.canvas = canvas;
@@ -97,7 +98,7 @@ export class UrnViewer {
         const { innerW: iw, innerH: ih } = this.state;
         if (!(iw > 0 && ih > 0)) return;
 
-        const { wall: t, lidPlug, lidTop } = this.sizes;
+        const t = this.wall(), lidTop = t, { lidPlug } = this.sizes;
         const W = iw + 2 * t;              // vnější šířka = hloubka (čtverec)
         const wallH = t + ih + lidPlug;    // stěny: dno + vnitřek + zátka víka
         const wood = this.woodMaterial();
@@ -126,8 +127,9 @@ export class UrnViewer {
     frame() {
         const { innerW: iw, innerH: ih } = this.state;
         if (!(iw > 0 && ih > 0)) return;
-        const W = iw + 2 * this.sizes.wall;
-        const H = this.sizes.wall + ih + this.sizes.lidPlug + this.sizes.lidTop;
+        const t = this.wall();
+        const W = iw + 2 * t;
+        const H = t + ih + this.sizes.lidPlug + t;
         // Rámováno i na zvednuté víko (+30 % výšky), aby nevyjelo z plátna
         const d = Math.max(W, H * 1.3) * 2.1;
         this.controls.target.set(0, H * 0.62, 0);
@@ -135,6 +137,11 @@ export class UrnViewer {
         this.controls.minDistance = Math.max(W, H);
         this.controls.maxDistance = d * 3;
         this.grid.scale.setScalar(Math.max(W, H) / 250);
+    }
+
+    /** Tloušťka desky v mm (stěny, dno i horní deska víka). */
+    wall() {
+        return this.state.wall > 0 ? this.state.wall : this.sizes.wall;
     }
 
     block(group, material, sx, sy, sz, x, y, z) {

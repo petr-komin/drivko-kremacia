@@ -30,13 +30,14 @@ class Order extends Model
     ];
 
     protected $fillable = [
-        'case_number', 'pet_name', 'wood_type_id', 'volume_ml', 'inner_width_cm', 'inner_height_cm',
+        'case_number', 'pet_name', 'wood_type_id', 'volume_ml', 'inner_width_cm', 'inner_height_cm', 'wall_mm',
         'with_paw', 'paw_width_cm', 'paw_height_cm', 'urn_lines', 'layout', 'price_eur', 'note', 'notify',
         'status', 'created_by', 'last_activity_at',
     ];
 
     protected $casts = [
         'volume_ml'        => 'integer',
+        'wall_mm'          => 'integer',
         'with_paw'         => 'boolean',
         'paw_size_in_photo' => 'boolean',
         'notify'           => 'boolean',
@@ -113,6 +114,7 @@ class Order extends Model
         'volume_ml'       => 'Objem',
         'inner_width_cm'  => 'Vnitřní šířka',
         'inner_height_cm' => 'Vnitřní výška',
+        'wall_mm'         => 'Tloušťka stěny',
         'with_paw'        => 'Otisk tlapky',
         'paw_width_cm'    => 'Šířka tlapky',
         'paw_height_cm'   => 'Výška tlapky',
@@ -134,6 +136,7 @@ class Order extends Model
         return match ($field) {
             'wood_type_id'                      => WoodType::find($value)?->label ?? '–',
             'volume_ml'                         => $value . ' ml',
+            'wall_mm'                           => $value . ' mm',
             'inner_width_cm', 'inner_height_cm',
             'paw_width_cm', 'paw_height_cm'     => rtrim(rtrim(number_format((float) $value, 1, ',', ''), '0'), ',') . ' cm',
             'with_paw', 'notify'                => $value ? __('ano') : __('ne'),
@@ -155,11 +158,19 @@ class Order extends Model
         return isset(self::LAYOUTS[$this->layout]) ? __(self::LAYOUTS[$this->layout]) : null;
     }
 
-    /** Síla dřeva v cm: stěny a dno; nahoře zanořené víko (do objemu se nepočítá) + horní stěna. */
-    public const WALL_CM = 0.8;
+    /**
+     * Tloušťka desky v mm (stěny, dno a horní deska víka) – zadává dílna podle desek na skladě.
+     * Nahoře je navíc zanořená zátka víka (do objemu se nepočítá).
+     */
+    public const DEFAULT_WALL_MM = 8;
+    public const MIN_WALL_MM = 8;
+    public const MAX_WALL_MM = 12;
     public const LID_PLUG_CM = 1.5;
-    public const LID_TOP_CM = 0.8;
-    public const TOP_CM = self::LID_PLUG_CM + self::LID_TOP_CM;
+
+    public function wallCm(): float
+    {
+        return ($this->wall_mm ?? self::DEFAULT_WALL_MM) / 10;
+    }
 
     // ── Cena ─────────────────────────────────────────────────────────────────
 
@@ -245,8 +256,10 @@ class Order extends Model
             return null;
         }
 
-        $w = (float) $this->inner_width_cm + ($outer ? 2 * self::WALL_CM : 0);
-        $h = (float) $this->inner_height_cm + ($outer ? self::WALL_CM + self::TOP_CM : 0);
+        // Vnější: stěna z obou stran; na výšku dno + zátka víka + horní deska víka
+        $t = $this->wallCm();
+        $w = (float) $this->inner_width_cm + ($outer ? 2 * $t : 0);
+        $h = (float) $this->inner_height_cm + ($outer ? 2 * $t + self::LID_PLUG_CM : 0);
         $f = fn (float $n) => rtrim(rtrim(number_format($n, 1, ',', ''), '0'), ',');
 
         return "{$f($w)} × {$f($w)} × {$f($h)} cm";

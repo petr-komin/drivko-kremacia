@@ -79,6 +79,7 @@ class OrderController extends Controller
                 'volume_ml'        => $data['volume_ml'],
                 'inner_width_cm'   => $data['inner_width_cm'] ?? null,
                 'inner_height_cm'  => $data['inner_height_cm'] ?? null,
+                'wall_mm'          => $data['wall_mm'] ?? Order::DEFAULT_WALL_MM,
                 'with_paw'         => $data['with_paw'],
                 'paw_width_cm'     => $data['paw_width_cm'],
                 'paw_height_cm'    => $data['paw_height_cm'],
@@ -171,6 +172,7 @@ class OrderController extends Controller
             // Rozměry jen jako dvojice – jeden bez druhého nic neříká
             'inner_width_cm'  => 'nullable|required_with:inner_height_cm|numeric|min:' . Order::MIN_INNER_CM . '|max:' . Order::MAX_INNER_CM,
             'inner_height_cm' => 'nullable|required_with:inner_width_cm|numeric|min:' . Order::MIN_INNER_CM . '|max:' . Order::MAX_INNER_CM,
+            'wall_mm'      => 'nullable|integer|min:' . Order::MIN_WALL_MM . '|max:' . Order::MAX_WALL_MM,
             'with_paw'     => 'boolean',
             // Rozměr tlapky (místo fotky s pravítkem); stačí jeden, druhý se odvodí z fotky
             'paw_width_cm'  => ['nullable', 'numeric', 'min:' . Order::MIN_PAW_CM, 'max:' . Order::MAX_PAW_CM],
@@ -184,13 +186,19 @@ class OrderController extends Controller
         ];
     }
 
-    /** Rozložení dává smysl jen u tlapky s textem; jinak se neukládá. E-maily vypíná jen dílna. */
+    /** Rozložení dává smysl jen u tlapky s textem; jinak se neukládá. E-maily a tloušťku stěny řeší jen dílna. */
     private function normalize(Request $request, array $data): array
     {
-        if ($request->user()->isAdmin() && array_key_exists('notify', $data)) {
+        if (Notifier::CLIENT_EMAILS && $request->user()->isAdmin() && array_key_exists('notify', $data)) {
             $data['notify'] = (bool) $data['notify'];
         } else {
             unset($data['notify']);
+        }
+
+        if ($request->user()->isAdmin() && array_key_exists('wall_mm', $data)) {
+            $data['wall_mm'] = (int) ($data['wall_mm'] ?? Order::DEFAULT_WALL_MM);
+        } else {
+            unset($data['wall_mm']);
         }
 
         $data['with_paw'] = (bool) ($data['with_paw'] ?? true);

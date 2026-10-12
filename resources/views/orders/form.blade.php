@@ -30,7 +30,7 @@
                         <label class="form-label" for="case_number">{{ __('Vaše číslo případu') }}</label>
                         <input type="text" name="case_number" id="case_number" value="{{ old('case_number', $order->case_number) }}" class="form-control" maxlength="64">
                     </div>
-                    @if(auth()->user()->isAdmin())
+                    @if(\App\Support\Notifier::CLIENT_EMAILS && auth()->user()->isAdmin())
                         {{-- Zpětný zápis starších zakázek: bez e-mailů kremaci ani dílně --}}
                         <div class="col-12">
                             <div class="form-check form-switch mb-0">
@@ -152,6 +152,20 @@
                         <div class="form-text">{{ __('1 litr = 1000 ml') }} · {{ __(':min až :max ml', ['min' => \App\Models\Order::MIN_VOLUME_ML, 'max' => number_format(\App\Models\Order::MAX_VOLUME_ML, 0, ',', ' ')]) }}</div>
                     </div>
 
+                    @if(auth()->user()->isAdmin())
+                        {{-- Tloušťka desky podle toho, co je na skladě; určuje vnější rozměry --}}
+                        <div class="col-sm-5">
+                            <label class="form-label" for="wall_mm">{{ __('Tloušťka stěny') }}</label>
+                            <div class="input-group">
+                                <input type="number" name="wall_mm" id="wall_mm" value="{{ old('wall_mm', $order->wall_mm ?? \App\Models\Order::DEFAULT_WALL_MM) }}"
+                                       class="form-control @error('wall_mm') is-invalid @enderror" min="{{ \App\Models\Order::MIN_WALL_MM }}" max="{{ \App\Models\Order::MAX_WALL_MM }}" step="1" inputmode="numeric" required>
+                                <span class="input-group-text">mm</span>
+                                @error('wall_mm')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="form-text">{{ __('Stěny, dno i horní deska víka; :min až :max mm.', ['min' => \App\Models\Order::MIN_WALL_MM, 'max' => \App\Models\Order::MAX_WALL_MM]) }}</div>
+                        </div>
+                    @endif
+
                     {{-- Nepovinná pomůcka: objem z vnitřních rozměrů + informativní vnější velikost --}}
                     <div class="col-sm-7">
                         <div class="rounded p-2 small" style="background: var(--sand)">
@@ -176,7 +190,10 @@
                                     <div class="mt-1">{{ __('Vnější') }}: <strong id="outer_height">–</strong></div>
                                 </div>
                             </div>
-                            <div class="mt-2 text-muted">{{ __('Šířka i výška :min–:max cm.', ['min' => \App\Models\Order::MIN_INNER_CM, 'max' => \App\Models\Order::MAX_INNER_CM]) }} {{ __('Půdorys je vždy čtverec. Zadejte šířku a výšku (dopočítá se objem), nebo šířku k objemu (dopočítá se výška). Vnější rozměry jsou orientační (stěny a dno 8 mm, víko 15 + 8 mm). Bez rozměrů je zvolí dílna podle objemu.') }}</div>
+                            @if(auth()->user()->isAdmin())
+                                <div class="mt-2">@include('partials.cut-list')</div>
+                            @endif
+                            <div class="mt-2 text-muted">{{ __('Šířka i výška :min–:max cm.', ['min' => \App\Models\Order::MIN_INNER_CM, 'max' => \App\Models\Order::MAX_INNER_CM]) }} {{ __('Půdorys je vždy čtverec. Zadejte šířku a výšku (dopočítá se objem), nebo šířku k objemu (dopočítá se výška). Vnější rozměry jsou orientační (stěny a dno :wall mm, víko 15 + :wall mm). Bez rozměrů je zvolí dílna podle objemu.', ['wall' => $order->wall_mm ?? \App\Models\Order::DEFAULT_WALL_MM]) }}</div>
                         </div>
                     </div>
 
@@ -228,6 +245,10 @@
 
 @push('scripts')
 <script>
+    // Tloušťka desky v cm: dílna ji zadává ve formuláři, kremace má tu uloženou u zakázky (výchozí 8 mm)
+    const urnWallCm = () => (parseInt(document.getElementById('wall_mm')?.value, 10) || {{ $order->wall_mm ?? \App\Models\Order::DEFAULT_WALL_MM }}) / 10;
+</script>
+<script>
     /*
      * Kalkulačka objem ↔ rozměry. Dopočítává se podle toho, co uživatel zadal naposled:
      *   - mění výšku          → objem z šířky a výšky
@@ -237,8 +258,8 @@
      * hodnoty (pole.value = …) žádnou událost nevyvolá.
      */
     (() => {
-        // Stejné hodnoty jako Order::WALL_CM / TOP_CM
-        const WALL = {{ \App\Models\Order::WALL_CM }}, TOP = {{ \App\Models\Order::TOP_CM }};
+        // Stejný výpočet jako Order::dimensionsLabel(outer: true)
+        const wall = urnWallCm, PLUG = {{ \App\Models\Order::LID_PLUG_CM }};
         const w = document.getElementById('calc_width'), h = document.getElementById('calc_height');
         const volume = document.getElementById('volume_ml');
         const outerW = document.getElementById('outer_width'), outerH = document.getElementById('outer_height');
@@ -263,9 +284,15 @@
         // Vnější rozměr hned pod vnitřním – každý zvlášť, ať je vidět i při rozpracovaném zadání
         const show = () => {
             const iw = num(w), ih = num(h);
-            outerW.textContent = iw > 0 ? `${cm(iw + 2 * WALL)} cm` : '–';
-            outerH.textContent = ih > 0 ? `${cm(ih + WALL + TOP)} cm` : '–';
+            outerW.textContent = iw > 0 ? `${cm(iw + 2 * wall())} cm` : '–';
+            outerH.textContent = ih > 0 ? `${cm(ih + 2 * wall() + PLUG)} cm` : '–';
         };
+
+        document.getElementById('wall_mm')?.addEventListener('input', show);
+        @if(auth()->user()->isAdmin())
+            // Přířez desek bere aktuální hodnoty z formuláře, v mm
+            window.cutListDims = () => ({ iw: num(w) * 10, ih: num(h) * 10, wall: wall() * 10 });
+        @endif
 
         volume.addEventListener('input', () => { driver = 'volume'; recalc(); });
         h.addEventListener('input', () => { driver = 'dims'; recalc(); });
@@ -315,10 +342,11 @@
                 note = ` · ${t.cube}`;
             }
             const wood = form.querySelector('input[name=wood_type_id]:checked');
-            const outerW = w + 2 * {{ \App\Models\Order::WALL_CM }}, outerH = h + {{ \App\Models\Order::WALL_CM + \App\Models\Order::TOP_CM }};
+            const t = urnWallCm();
+            const outerW = w + 2 * t, outerH = h + 2 * t + {{ \App\Models\Order::LID_PLUG_CM }};
 
             window.urnViewer.update({
-                innerW: w * 10, innerH: h * 10,
+                innerW: w * 10, innerH: h * 10, wall: t * 10,
                 woodName: wood?.dataset.name, woodPhoto: wood?.dataset.photo || null,
                 withPaw: document.getElementById('with_paw').checked,
                 lines: [...document.querySelectorAll('#urn-lines .urn-line')]

@@ -1,7 +1,7 @@
 {{--
     3D náhled urny. Plátno + popisek; stav do něj posílá stránka přes
     window.urnViewer.update({...}) (formulář) nebo $state (detail zakázky, jen ke čtení).
-    Parametry: $state (pole, nepovinné) – innerW, innerH (mm), woodName, woodPhoto, withPaw, lines [{text, size}], layout
+    Parametry: $state (pole, nepovinné) – innerW, innerH, wall (mm), woodName, woodPhoto, withPaw, lines [{text, size}], layout
 --}}
 <div class="urn-3d rounded overflow-hidden position-relative" style="background: var(--sand)">
     <canvas id="urn-canvas" style="width:100%; height:280px; display:block; touch-action:none"></canvas>
@@ -26,9 +26,8 @@
     import { UrnViewer } from '{{ asset('js/urn-viewer.js') }}?v={{ filemtime(public_path('js/urn-viewer.js')) }}';
 
     const viewer = new UrnViewer(document.getElementById('urn-canvas'), {
-        wall: {{ \App\Models\Order::WALL_CM * 10 }},
+        wall: {{ \App\Models\Order::DEFAULT_WALL_MM }},
         lidPlug: {{ \App\Models\Order::LID_PLUG_CM * 10 }},
-        lidTop: {{ \App\Models\Order::LID_TOP_CM * 10 }},
         textRatios: @json(array_map(fn ($s) => $s['ratio'], \App\Models\Order::TEXT_SIZES)),
     });
     const placeholder = document.getElementById('urn-placeholder');

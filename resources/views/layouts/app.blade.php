@@ -118,6 +118,8 @@
     </div>
 </div>
 
+@stack('modals')
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // Zvětšení obrázku v okně; preventDefault – uvnitř <label> by klik jinak zároveň vybral volbu

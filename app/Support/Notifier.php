@@ -15,9 +15,15 @@ use Illuminate\Support\Facades\Mail;
  * uložení zakázky, proto se chyba jen zaloguje. Každý příjemce dostane
  * e-mail ve svém jazyce (users.locale); adresa mimo uživatele česky.
  * Zakázka s vypnutými upozorněními (orders.notify – zpětný zápis) nic neposílá.
+ *
+ * Teď vypnuto (CLIENT_EMAILS = false): e-maily dostává jen dílna, ke všem zakázkám,
+ * a přepínač orders.notify je schovaný – dílna nechtěla kremaci zahlcovat.
+ * Přepnutím na true se vrátí e-maily kremaci i přepínač u zakázky.
  */
 final class Notifier
 {
+    public const CLIENT_EMAILS = false;
+
     public static function newOrder(Order $order, User $author): void
     {
         self::send(self::adminRecipients($author), $order, ['new'], $order->note);
@@ -56,12 +62,16 @@ final class Notifier
     /** @return array<string, string> e-mail => jazyk */
     private static function clientRecipients(User $author): array
     {
+        if (! self::CLIENT_EMAILS) {
+            return [];
+        }
+
         return User::clients()->active()->where('id', '!=', $author->id)->pluck('locale', 'email')->all();
     }
 
     private static function send(array $recipients, Order $order, array $event, ?string $text = null, int $photos = 0): void
     {
-        if (! $order->notify) {
+        if (self::CLIENT_EMAILS && ! $order->notify) {
             return;
         }
 
