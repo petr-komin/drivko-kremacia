@@ -27,7 +27,7 @@
                         <input type="text" name="pet_name" id="pet_name" value="{{ old('pet_name', $order->pet_name) }}" class="form-control" required maxlength="120">
                     </div>
                     <div class="col-sm-5">
-                        <label class="form-label" for="case_number">{{ __('Vaše číslo případu') }}</label>
+                        <label class="form-label" for="case_number">{{ __('Vaše číslo případu') }} <span class="text-muted fw-normal small">({{ __('nepovinné') }})</span></label>
                         <input type="text" name="case_number" id="case_number" value="{{ old('case_number', $order->case_number) }}" class="form-control" maxlength="64">
                     </div>
                     @if(\App\Support\Notifier::CLIENT_EMAILS && auth()->user()->isAdmin())
