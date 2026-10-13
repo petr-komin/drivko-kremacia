@@ -75,6 +75,7 @@
 
                 @unless($editing)
                     <div id="paw-section" class="mb-3 {{ $withPaw ? '' : 'd-none' }}">
+                        <div class="fw-semibold small mb-1">{{ __('Fotky tlapky') }} <span class="text-muted fw-normal">({{ __('nebo jiný obrázek') }})</span></div>
                         <p class="small text-muted mb-2">{{ __('Ostrá fotka zblízka, celá tlapka v záběru, ideálně na světlém podkladu. Klidně víc fotek z různých úhlů.') }}</p>
                         <p class="small text-muted mb-2">{{ __('Fotky můžete nahrát i později v detailu zakázky.') }}</p>
                         @include('partials.photo-input', ['id' => 'paw-photos'])

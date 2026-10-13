@@ -34,8 +34,12 @@ final class Photos
 {
     public const DISK = 'local';
 
-    /** Přípustné přípony nahraných fotek – sdílené validací i formuláři. */
-    public const EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif'];
+    /**
+     * Přípustné přípony nahraných fotek – sdílené validací i formuláři.
+     * SVG (místo fotky tlapky třeba nakreslený obrázek): náhled vyrenderuje vips, originál jde jen ke stažení
+     * – v prohlížeči by mohl spustit skript.
+     */
+    public const EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif', 'svg'];
 
     /** Max. velikost jedné fotky v kB (musí sedět s upload_max_filesize v Dockerfile). */
     public const MAX_KB = 50 * 1024;
@@ -124,15 +128,16 @@ final class Photos
         return $binary === false ? $binary = (new ExecutableFinder)->find('vipsthumbnail') : $binary;
     }
 
-    /** vipsthumbnail sám otočí podle EXIF; „>“ = jen zmenšovat, nikdy nezvětšit. */
+    /** vipsthumbnail sám otočí podle EXIF; „>“ = jen zmenšovat, nikdy nezvětšit (vektor SVG se vykreslí rovnou v cílové velikosti). */
     private static function generateWithVips(string $path): bool
     {
-        $disk = Storage::disk(self::DISK);
+        $disk   = Storage::disk(self::DISK);
+        $vector = strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'svg';
 
         foreach (self::VARIANTS as $variant => [$maxSide, $quality]) {
             $result = Process::timeout(120)->run([
                 self::vips(), $disk->path($path),
-                '--size', "{$maxSide}x{$maxSide}>",
+                '--size', "{$maxSide}x{$maxSide}" . ($vector ? '' : '>'),
                 '-o', $disk->path(self::variantPath($path, $variant)) . "[Q={$quality},keep=none]",
             ]);
 

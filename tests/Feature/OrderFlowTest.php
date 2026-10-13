@@ -520,6 +520,24 @@ class OrderFlowTest extends TestCase
         $this->assertSame(12, $order->fresh()->wall_mm);
     }
 
+    public function test_paw_image_can_be_svg_and_original_is_served_only_as_download(): void
+    {
+        $svg = UploadedFile::fake()->createWithContent('kresba.svg',
+            '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><circle cx="20" cy="20" r="15" fill="#5a3e1b"/></svg>');
+
+        $this->actingAs($this->client)->post(route('orders.store'), [
+            'pet_name' => 'Rex', 'wood_type_id' => $this->wood->id, 'volume_ml' => 800, 'photos' => [$svg],
+        ])->assertSessionHasNoErrors();
+
+        $photo = Order::firstOrFail()->pawPhotos()->firstOrFail();
+        $this->assertStringEndsWith('.svg', $photo->path);
+
+        $this->get(route('photos.show', [$photo, 'original']))->assertOk()
+            ->assertHeader('Content-Security-Policy', 'sandbox')
+            ->assertHeader('X-Content-Type-Options', 'nosniff')
+            ->assertDownload();
+    }
+
     public function test_order_without_wood_price_has_no_price(): void
     {
         $this->actingAs($this->client)->post(route('orders.store'), [

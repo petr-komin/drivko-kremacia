@@ -10,16 +10,16 @@
 @endphp
 <div class="photo-input" data-max="{{ $max }}" data-max-mb="{{ $maxMb }}" data-required="{{ ($required ?? false) ? 1 : 0 }}" id="{{ $id }}">
     {{-- Bez atributu required – u skrytého pole by prohlížeč odeslání tiše zablokoval --}}
-    <input type="file" name="photos[]" multiple class="d-none pi-real" accept="image/*,.heic,.heif">
+    <input type="file" name="photos[]" multiple class="d-none pi-real" accept="image/*,.heic,.heif,.svg">
     <input type="file" accept="image/*" capture="environment" class="d-none pi-camera">
-    <input type="file" accept="image/*,.heic,.heif" multiple class="d-none pi-gallery">
+    <input type="file" accept="image/*,.heic,.heif,.svg" multiple class="d-none pi-gallery">
 
     <div class="d-flex flex-wrap gap-2 mb-2">
         <button type="button" class="btn btn-outline-brown pi-btn-camera"><i class="bi bi-camera me-1"></i>{{ __('Vyfotit') }}</button>
         <button type="button" class="btn btn-outline-brown pi-btn-gallery"><i class="bi bi-images me-1"></i>{{ __('Vybrat fotky') }}</button>
     </div>
     <div class="photo-grid pi-previews"></div>
-    <div class="form-text pi-info">{{ __('Max. :max fotek po :mb MB', ['max' => $max, 'mb' => $maxMb]) }} · JPG, PNG, WebP, HEIC</div>
+    <div class="form-text pi-info">{{ __('Max. :max fotek po :mb MB', ['max' => $max, 'mb' => $maxMb]) }} · JPG, PNG, WebP, HEIC, SVG</div>
     <div class="text-danger small pi-error"></div>
 </div>
 
@@ -50,7 +50,7 @@ document.querySelectorAll('.photo-input').forEach(box => {
         files.forEach((f, i) => {
             const ph = document.createElement('div');
             ph.className = 'ph';
-            if (/^image\/(jpeg|png|webp|gif)$/.test(f.type)) {
+            if (/^image\/(jpeg|png|webp|gif|svg\+xml)$/.test(f.type)) {
                 const img = document.createElement('img');
                 img.src = URL.createObjectURL(f);
                 img.onload = () => URL.revokeObjectURL(img.src);

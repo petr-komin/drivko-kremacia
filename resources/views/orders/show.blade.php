@@ -121,7 +121,8 @@
         @if($order->with_paw || $order->pawPhotos->isNotEmpty())
         <div class="card mb-3">
             <div class="card-body">
-                <h2 class="h6 fw-bold"><i class="bi bi-camera me-1"></i>{{ __('Fotky tlapky') }} <span class="text-muted fw-normal">({{ $order->pawPhotos->count() }})</span></h2>
+                <h2 class="h6 fw-bold"><i class="bi bi-camera me-1"></i>{{ __('Fotky tlapky') }} <span class="text-muted fw-normal">({{ $order->pawPhotos->count() }})</span>
+                    <span class="text-muted fw-normal small">· {{ __('nebo jiný obrázek') }}</span></h2>
                 @if($order->missingPawPhoto())
                     <div class="alert alert-warning py-2 small"><i class="bi bi-exclamation-triangle-fill me-1"></i>{{ __('Chybí fotka tlapky – nahrajte ji níže.') }}</div>
                 @endif
@@ -141,7 +142,7 @@
                       data-uploading="{{ __('Nahrávám fotky…') }}" class="mt-3">
                     @csrf
                     <input type="hidden" name="kind" value="paw">
-                    <div class="small fw-semibold mb-1">{{ __('Doplnit fotky tlapky') }}</div>
+                    <div class="small fw-semibold mb-1">{{ __('Doplnit fotky tlapky') }} <span class="text-muted fw-normal">({{ __('nebo jiný obrázek') }})</span></div>
                     @include('partials.photo-input', ['id' => 'paw-add-photos', 'required' => true])
                     <button type="submit" class="btn btn-sm btn-brown mt-1"><i class="bi bi-upload me-1"></i>{{ __('Nahrát fotky') }}</button>
                 </form>

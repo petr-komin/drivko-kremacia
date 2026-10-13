@@ -19,8 +19,11 @@ class PhotoController extends Controller
         if ($variant === 'original') {
             abort_unless($disk->exists($photo->path), 404);
 
+            // Vždy jako příloha; nosniff + sandbox, aby se SVG se skriptem nespustilo ani při přímém otevření
             return $disk->download($photo->path, $this->downloadName($photo), [
-                'Cache-Control' => 'private, max-age=86400',
+                'Cache-Control'           => 'private, max-age=86400',
+                'X-Content-Type-Options'  => 'nosniff',
+                'Content-Security-Policy' => 'sandbox',
             ]);
         }
 
