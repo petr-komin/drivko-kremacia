@@ -208,7 +208,7 @@
                             @endforeach
                         </select>
 
-                        <label class="form-label small">{{ __('Fotky hotového kusu') }} <span class="text-muted">({{ __('nutné pro „Hotovo“') }})</span></label>
+                        <label class="form-label small">{{ __('Fotky hotového kusu') }} <span class="text-muted">({{ __('nepovinné') }})</span></label>
                         @include('partials.photo-input', ['id' => 'finished-photos'])
 
                         <label class="form-label small mt-3" for="status-body">{{ __('Vzkaz pro kremaci') }}</label>

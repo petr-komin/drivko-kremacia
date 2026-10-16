@@ -19,8 +19,7 @@ class OrderAdminController extends Controller
 {
     /**
      * Změna stavu, volitelně s fotkami hotového kusu a vzkazem pro kremaci.
-     * Do stavu „Hotovo“ nejde zakázku dát bez fotky hotového kusu – z fotek
-     * vzniká evidence dokončené práce.
+     * Fotka hotového kusu je nepovinná – jde doplnit i později.
      */
     public function updateStatus(Request $request, Order $order)
     {
@@ -31,10 +30,6 @@ class OrderAdminController extends Controller
 
         $files  = $request->file('photos', []);
         $status = $data['status'];
-
-        if ($status === Order::STATUS_FINISHED && ! $files && ! $order->finishedPhotos()->exists()) {
-            return back()->withErrors(['photos' => __('Před označením „Hotovo“ nahrajte fotku hotového kusu.')])->withInput();
-        }
 
         $statusChanged = $status !== $order->status;
         $body = trim((string) ($data['body'] ?? ''));

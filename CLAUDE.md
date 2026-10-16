@@ -58,7 +58,7 @@ Dílna mluví česky, kremace slovensky – každý si jazyk přepne v profilu (
 ## Důležité
 - Fotky leží na privátním disku `local` (storage/app/private), ven jen přes `PhotoController`
   přihlášeným. Originál se nemění, náhledy (WebP) dělá `App\Support\Photos`.
-- Stav „Hotovo“ vyžaduje fotku hotového kusu. Časy stavů (`started_at`, `finished_at`,
+- Fotka hotového kusu je nepovinná (ani pro „Hotovo“), jde doplnit později. Časy stavů (`started_at`, `finished_at`,
   `handed_over_at`) jsou zdroj měsíčního přehledu – návrat do dřívějšího stavu je maže (`Order::moveTo`).
 - E-maily: `App\Support\Notifier`, chyba odeslání se jen zaloguje. **Teď jen dílně** (`Notifier::CLIENT_EMAILS = false` – kremaci nic, přepínač `orders.notify` schovaný, dílna dostává ke všem zakázkám); `true` vrátí původní chování.
 - Testy běží na SQLite v paměti – v dotazech nepoužívat syntaxi jen pro PostgreSQL (např. `ilike`, použij `whereLike`).

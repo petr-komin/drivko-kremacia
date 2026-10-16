@@ -143,15 +143,18 @@ class OrderFlowTest extends TestCase
         $this->get(route('report.index'))->assertForbidden();
     }
 
-    public function test_finished_requires_photo_of_finished_piece(): void
+    public function test_finished_does_not_require_photo_of_finished_piece(): void
     {
         $order = $this->createOrder();
 
         $this->actingAs($this->admin)
             ->post(route('orders.status', $order), ['status' => Order::STATUS_FINISHED])
-            ->assertSessionHasErrors('photos');
+            ->assertSessionHasNoErrors();
 
-        $this->assertSame(Order::STATUS_NEW, $order->fresh()->status);
+        $order->refresh();
+        $this->assertSame(Order::STATUS_FINISHED, $order->status);
+        $this->assertNotNull($order->finished_at);
+        $this->assertSame(0, $order->finishedPhotos()->count());
     }
 
     public function test_status_flow_records_timestamps_and_report(): void
